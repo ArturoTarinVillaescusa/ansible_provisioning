@@ -45,7 +45,7 @@ keytool -keystore kafka.server.keystore.jks -certreq -file cert-file \
 ls -lrth
 
 # 2) Send the "cert-file" to the CA, so that the CA is able to sign our certificate.
-#    In a real world scenario, we would now take our “cert-file” and send it to our Goldcar’s CA administrator
+#    In a real world scenario, we would now take our “cert-file” and send it to our Rentalcar’s CA administrator
 #    via email or whatever, and we would get back a signed version of our certificate.
 #    But since we are going to get a “self-signed” certificate for our training purposes, and we already have
 #    created our own CA, we are now able to sign the certificate on our own. And for that to happen we are going
@@ -91,7 +91,7 @@ keytool -keystore kafka.client.keystore.jks -certreq -file client-cert-sign-requ
 ls -lrht
 
 # 2) Send the "client-cert-sign-request" to the CA, so that the CA is able to sign our certificate.
-#    In a real world scenario, we would now take our “cert-file” and send it to our Goldcar’s CA administrator
+#    In a real world scenario, we would now take our “cert-file” and send it to our Rentalcar’s CA administrator
 #    via email or whatever, and we would get back a signed version of our certificate.
 #    But since we are going to get a “self-signed” certificate for our training purposes, and we already have
 #    created our own CA, we are now able to sign the certificate on our own. And for that to happen we are going

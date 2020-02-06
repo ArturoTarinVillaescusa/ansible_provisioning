@@ -18,7 +18,7 @@ These variables must be set, they have no defaults:
 
     repo_name: My Test
     repo_project_key: IC
-    nexus_repo_name: MavenGoldcar
+    nexus_repo_name: MavenRentalcar
     
 This variable creates Build Jobs in Jenkins.
 
@@ -85,7 +85,7 @@ Because of the larger number of variables involved, we prefer to add them to the
       vars:
         - repo_name: My Test
         - repo_project_key: IC
-        - nexus_repo_name: MavenGoldcar
+        - nexus_repo_name: MavenRentalcar
         - build_job: true
         - build_deliver: true
         - build_builders_gradle: true

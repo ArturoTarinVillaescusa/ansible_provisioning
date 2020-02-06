@@ -1,4 +1,4 @@
-<GetAllGroupsReservationAvailabilityAndRatesByLocationRQ xmlns="http://sarsis.rentalcar.es/SARSISD/Esquemas" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://sarsis.rentalcar.es/SARSISD/Esquemas http://sarsis.rentalcar.es/SARSISD/Esquemas/GOLDCAR_GetAllGroupsReservationAvailabilityAndRatesByLocation.xsd">
+<GetAllGroupsReservationAvailabilityAndRatesByLocationRQ xmlns="http://sarsis.rentalcar.es/SARSISD/Esquemas" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://sarsis.rentalcar.es/SARSISD/Esquemas http://sarsis.rentalcar.es/SARSISD/Esquemas/Rentalcar_GetAllGroupsReservationAvailabilityAndRatesByLocation.xsd">
   <Authentication>
     <Code>50000-00</Code>
     <Password>0000</Password>

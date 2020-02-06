@@ -5,7 +5,7 @@
 nexus_url: "http://desreposrv.rentalcar.es:10081"
 
 nexus_repository: "{{ nexus_url }}/repository/Daemons/"
-nexus_artifact_name: "Goldcar-MicroServices-Tasarauto"
+nexus_artifact_name: "Rentalcar-MicroServices-Tasarauto"
 nexus_artifact_version: "{{ tasarauto_version | default('1.4.5') }}"
 nexus_artifact_file: "{{ nexus_artifact_name }}-{{ nexus_artifact_version }}.zip"
 nexus_artifact_path: "{{ nexus_repository }}{{ nexus_artifact_file }}"

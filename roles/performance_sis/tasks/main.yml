@@ -1,7 +1,7 @@
 ---
 # tasks file for performance_sis
 
-- name: "Create Goldcar folder"
+- name: "Create Rentalcar folder"
   file: "path='{{ rentalcar_path }}' state='directory'"
 
 - name: "Copy Project SoapUI file"

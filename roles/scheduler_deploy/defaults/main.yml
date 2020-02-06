@@ -4,7 +4,7 @@
 
 nexus_url: "http://desreposrv.rentalcar.es:10081"
 
-nexus_repository: "{{ nexus_url }}/repository/MavenGoldcar/com/goldCar/Scheduler/{{ scheduler_version | default('1.0') }}/"
+nexus_repository: "{{ nexus_url }}/repository/MavenRentalcar/com/Rentalcar/Scheduler/{{ scheduler_version | default('1.0') }}/"
 nexus_artifact_name: "Scheduler"
 nexus_artifact_version: "{{ scheduler_version | default('1.0') }}"
 nexus_artifact_file: "{{ nexus_artifact_name }}-{{ nexus_artifact_version }}.jar"

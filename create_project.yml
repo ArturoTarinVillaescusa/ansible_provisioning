@@ -9,7 +9,7 @@
 #
 #    repo_name: My Test
 #    repo_project_key: IC
-#    nexus_repo_name: MavenGoldcar
+#    nexus_repo_name: MavenRentalcar
 #    build_job: false
 #    build_deliver: false
 #    build_view: false
