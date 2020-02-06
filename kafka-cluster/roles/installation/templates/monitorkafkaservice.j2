@@ -1,4 +1,4 @@
 check process kafka matching "java -Xmx1G.*kafka"
         start program = "/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties &"
         stop program = "/opt/kafka/bin/kafka-server-stop.sh"
-        alert atarin.mistralbs@rentalcar.com with reminder on 500 cycles
+        alert atarin@rentalcar.com with reminder on 500 cycles
