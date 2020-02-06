@@ -1,0 +1,23 @@
+# The global variable file for a Kafka cluster installation
+
+zookeeper_version: zookeeper-3.4.10
+
+kafka_version: kafka_2.12-1.1.0
+
+zookeeper_targz_file: "{{ zookeeper_version }}.tar.gz"
+
+zookeeper_targz_url: http://apache.rediris.es/zookeeper/stable/{{ zookeeper_targz_file }}
+
+zookeeper_app_dir: /opt/zookeeper
+
+zookeeper_withversion_app_dir: /opt/{{ zookeeper_version }}
+
+zookeeper_data_dir: /opt/data/zookeeper
+
+kafka_targz_file: "{{ kafka_version }}.tgz"
+
+kafka_targz_url: http://apache.uvigo.es/kafka/1.1.0/{{ kafka_targz_file }}
+
+kafka_app_dir: /opt/kafka
+
+kafka_withversion_app_dir: /opt/{{ kafka_version }}

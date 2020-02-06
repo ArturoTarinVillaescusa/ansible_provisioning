@@ -1,0 +1,40 @@
+---
+- name: "(Default Setup: All NGINX) Upload NGINX Main Configuration File"
+  copy:
+    src: "{{ main_push_location }}"
+    dest: /etc/nginx/nginx.conf
+    backup: yes
+  notify: "Reload NGINX"
+  when: main_push_enable
+
+- name: "(Default Setup: All NGINX) Ensure NGINX HTTP Directory Exists"
+  file:
+    path: /etc/nginx/conf.d/http
+    state: directory
+  when: http_push_enable
+
+- name: "(Default Setup: All NGINX) Upload NGINX HTTP Configuration Files"
+  copy:
+    src: "{{ item }}"
+    dest: /etc/nginx/conf.d/http
+    backup: yes
+  with_fileglob:
+    - "{{ http_push_location }}"
+  notify: "Reload NGINX"
+  when: http_push_enable
+
+- name: "(Default Setup: All NGINX) Ensure NGINX Stream Directory Exists"
+  file:
+    path: /etc/nginx/conf.d/stream
+    state: directory
+  when: stream_push_enable
+
+- name: "(Default Setup: All NGINX) Upload NGINX Stream Configuration Files"
+  copy:
+    src: "{{ item }}"
+    dest: /etc/nginx/conf.d/stream
+    backup: yes
+  with_fileglob:
+    - "{{ stream_push_location }}"
+  notify: "Reload NGINX"
+  when: stream_push_enable

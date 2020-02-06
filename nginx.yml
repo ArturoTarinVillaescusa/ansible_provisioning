@@ -1,0 +1,14 @@
+#
+# Playbook to deploy NGINX
+#
+# Variables:
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=nginx nginx.yml
+#
+- hosts: all
+  gather_facts: true
+  roles:
+    - { role: bootstrap }
+    - { role: nginx }

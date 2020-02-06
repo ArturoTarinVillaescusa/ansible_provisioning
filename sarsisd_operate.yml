@@ -1,0 +1,18 @@
+#
+# Playbook to deploy SARSISD
+#
+# Variables:
+#
+# operation: start|stop|restart
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=sarsisdhosts sarsisd_operate.yml --extra-vars "operation=restart"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/sarsisd_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  roles:
+    - sarsisd_operate

@@ -1,0 +1,75 @@
+[Parametros Demonio]
+CodigoSucursal={{ galad_codigo_sucursal | default('CEN') }}
+NombreSucursal={{ galad_nombre_sucursal | default('Central') }}
+NombreDelDemonio=GalaD
+NombreServidorMailPOP={{ galad_mail_server_pop | default('localhost') }}
+NombreServidorMailSMTP={{ galad_mail_server_smtp | default('localhost') }}
+LoginPOPServidorMail={{ galad_mail_user_pop | default('sar') }}
+LoginSMTPServidorMail={{ galad_mail_user_smtp | default('info') }}
+LanzarWebServiceConsulta={{ galad_webservice_consulta | default('0') }}
+RutaCertificadosServidor=Certificados\
+;; ruta a la imagen que se usara como logotipo en el GUI
+RutaImagen={{ galad_ruta_imagen | default('logo.png') }}
+;; ruta al icono que se usara en la bandeja de sistema
+RutaIcono={{ galad_ruta_icono | default('mainicon') }}
+;; tipo de icono
+;; ; OrigenIcono=1 significa que cargará el icono como un resource
+OrigenIcono={{ galad_origen_icono | default('1') }}
+;; Campos para personalizar a partir de aqui
+;; Para que el Daemon arranque
+;; ; DaemonConfigurado=0, valor por defecto / daemon no arranca
+;; ; DaemonConfigurado=1, daemon configurado, daemon arranca
+DaemonConfigurado={{ galad_daemon_id | default('1') }}
+;; Conexiones a BBDD minimas que el daemon va a necesitar (por ejemplo, GalaD necesita 1 + 1 x hilo de envio)
+;; ; (los cambios en este campo no son efectivos hasta que el daemon se reinicie)
+Conexiones={{ galad_num_conexiones | default('5') }}
+;; Nombre del servidor de base de datos que el demonio atacara
+NombreServidorCentral={{ galad_servidor_central | default('localhost') }}
+;; Nombre de la base de datos a la que el demonio atacara
+NombreBaseDatos={{ galad_servidor_bd | default('localhost') }}
+;; Lista de correos a los que notificar de cualquier problema que surja
+EMailNotificacion={{ galad_notificaciones_email | default('itsystems@goldcar.com') }}
+;; fin de campos personalizables
+
+[TareaComprobadorMemoria]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Tarea de comprobacion de memoria     ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Comprobara que la memoria esta por   ;;
+;; debajo de "TamanoMaxMemoriaRAM" en   ;;
+;; el peridodo indicado por "Intervalo" ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Nombre={{ galad_comprobador_memoria_nombre | default('Comprobador de Memoria') }}
+Descripcion={{ galad_comprobador_memoria_descripcion | default('Tarea encargada de comprobar la memoria usada por el daemon y de la notifiacion en caso de que supere determinado umbral') }}
+Intervalo={{ galad_comprobador_memoria_intervalo | default('10m') }}
+TamanoMaxMemoriaRAM={{ galad_comprobador_memoria_max_ram | default('3000') }}
+Ocultar={{ galad_comprobador_memoria_ocultar | default('1') }}
+
+[TareaGalaDContratos]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;         Tarea Gala Contratos         ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;   Envio de contratos a AENA en el    ;;
+;;  peridodo indicado por "Intervalo"   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Nombre={{ galad_contratos_nombre | default('Transferencia contratos Gala-Aena') }}
+Descripcion={{ galad_contratos_descripcion | default('Transferencia de contratos y modificaciones al servicio Gala de Aena') }}
+;; Direccion y puerto donde comunicarse con GalaWSD
+DireccionGalaWS={{ galad_contratos_ws_servidor | default('localhost') }}
+PuertoGalaWS={{ galad_contratos_ws_puerto | default('8080') }}
+;; Timeout para la conexión con GalaWSD
+TimeoutGalaWS={{ galad_contratos_ws_timeout | default('75s') }}
+;; Intervalo de lanzamiento de la tarea
+Intervalo={{ galad_contratos_ws_intervalo | default('30s') }}
+;; Tiempo de cortesia para no enviar un contrato bloqueado
+;; ; por defecto son 6 minutos
+TiempoCortesiaContratoBloqueado={{ galad_contratos_tiempo_cortesia_bloqueado | default('6m') }}
+;; Concurrencia para ciertas tareas (cada uno necesita una conexion libre en el pool de conexiones a BBDD)
+;; ; (los cambios en este campo no son efectivos hasta que el daemon se reinicie)
+;; ; El envio y la carga no se realizan simultaneamente por lo que solo hay que considerar el valor mayor para las conexiones a BBDD
+ConcurrenciaEnvio={{ galad_contratos_concurrencia_envio | default('4') }}
+ConcurrenciaCargaContratos={{ galad_contratos_concurrencia_carga_contratos | default('3') }}
+;; PeriodicidadLog indica cada cuanto se quiere generar un archivo de log nuevo.
+;; ; Los valores posibles son (Eterno, Diario, Semana, Mensual) siendo esa la periodicidad (Diario generara un archivo de log cada dia mientras que eterno usara siempre el mismo archivo).
+;; ; Por defecto se usa “Eterno”
+PeriodicidadLog={{ galad_contratos_periodicidad_log | default('Diario') }}

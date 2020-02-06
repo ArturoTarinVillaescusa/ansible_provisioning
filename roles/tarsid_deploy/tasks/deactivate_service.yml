@@ -1,0 +1,51 @@
+- name: "Get Current Session Id"
+  win_shell: |
+    $server = "localhost"
+    $users = @()
+    # Query using quser, 2>$null to hide "No users exists...", then skip to the next server
+    $quser = quser /server:$server 2>$null
+    if(!($quser)){
+        Continue
+    }
+    #Remove column headers
+    $quser = $quser[1..$($quser.Count)]
+    foreach($user in $quser){
+      $usersObj = [PSCustomObject]@{SessionId=$Null}
+      $quserData = $user -split "\s+"
+      #We have to splice the array if the session is disconnected (as the SESSIONNAME column quserData[2] is empty)
+      if(($user | select-string "{{ psexec_service_user.split('@')[0] }}") -eq $null){
+          Continue
+      }
+      #We have to splice the array if the session is disconnected (as the SESSIONNAME column quserData[2] is empty)
+      if(($user | select-string "Disc") -ne $null){
+          #User is disconnected
+          $quserData = ($quserData[0..1],"null",$quserData[2..($quserData.Length -1)]) -split "\s+"
+      }
+      # SessionID
+      $users = $quserData[3]
+    }
+    return $users
+  register: current_session_id
+
+- name: "Copy Deactivate SQL file"
+  local_action:
+    module: template
+    src: "roles/tarsid_deploy/templates/sql/deactivate_service.sql.j2"
+    dest: "/tmp/deactivate_tar.sql"
+
+- name: "Deactivate TAR"
+  local_action:
+    module: mssql_db
+    name: 'BDSIGGER'
+    login_host: '{{ tar_db_host }}'
+    login_user: '{{ tar_db_user }}'
+    login_password: '{{ tar_db_password }}'
+    login_port: '{{ tar_db_port }}'
+    state: import
+    target: '/tmp/deactivate_tar.sql'
+
+- name: "Remove Deactivate SQL file"
+  local_action:
+    module: file
+    state: absent
+    path: "/tmp/deactivate_tar.sql"

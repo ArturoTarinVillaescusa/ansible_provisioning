@@ -1,0 +1,6 @@
+---
+
+#### CDVSID Config
+
+project_installation_dest: "C:\\Daemons\\CDVSID"
+service_port: "9003"

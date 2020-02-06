@@ -1,0 +1,111 @@
+#####################################
+#  CONFIGURACIÓN DE BASES DE DATOS  #
+#####################################
+
+com.rentalcar {
+	# Configuración de la BBDD de Pricing Platform usada por Web y System
+	db.internal {
+		url = "{{ pricing_db_internal_url | default('jdbc:jtds:sqlserver://127.0.0.1/BDPricing') }}"
+		user = "{{ pricing_db_internal_user | default('test') }}"
+		password = "{{ pricing_db_internal_password| default('changeme') }}"
+	}
+
+	# Configuración de la BBDD externa a Pricing Platform (BDSIGGERpricingG2)
+	db.external {
+        url = "{{ pricing_db_external_url | default('jdbc:jtds:sqlserver://127.0.0.1/BDSIGGER') }}"
+        user = "{{ pricing_db_external_user | default('test')}}"
+        password = "{{ pricing_db_external_password | default('changeme') }}"
+	}
+
+	# Configuración de la BBDD externa a Precios Competencia
+	db.competition_prices {
+		url = "{{ pricing_db_competition_prices_url | default('jdbc:jtds:sqlserver://127.0.0.1/BDCompetitionPrices') }}"
+		user = "{{ pricing_db_competition_prices_user | default('test')}}"
+		password = "{{ pricing_db_competition_prices_password | default('test')}}"
+	}
+
+	# Configuración de la BBDD donde está LogSIS
+	db.log {
+		url = "{{ pricing_db_log_url | default('jdbc:jtds:sqlserver://127.0.0.1/BDLogSIS') }}"
+		user = "{{ pricing_db_log_user | default('test') }}"
+		password = "{{ pricing_db_log_password | default('changeme') }}"
+	}
+
+     # Configuración del servidor de Redis
+    db.redis {
+       host = "{{ pricing_db_redis_host | default(ansible_hostname) }}"
+       port = {{ pricing_db_redis_port | default('6379') }}
+       dataStoreKey = "{{ pricing_db_redis_datastorekey | default('DataStore') }}"
+       eventIdStoreKey = "{{ pricing_db_redis_eventidstorekey | default('eventIdStore') }}"
+       database = {{ pricing_db_redis_database | default('0') }}
+       {% if pricing_db_redis_secret is defined %}
+secret = "{{ pricing_db_redis_secret }}"
+       {% endif %}
+    }
+}
+
+
+
+
+
+#############################################################################
+#                        A  T  E  N  C  I  Ó  N                             #
+# A partir de aquí mejor no tocar si no se sabe lo que se está haciendo ;-) #
+#############################################################################
+slick {
+	dbs {
+		# BBDD propia del Pricing System
+		default {
+			profile = "slick.jdbc.SQLServerProfile$"
+			db {
+				url = ${com.rentalcar.db.internal.url}
+				driver = "net.sourceforge.jtds.jdbc.Driver"
+				user = ${com.rentalcar.db.internal.user}
+				password = ${com.rentalcar.db.internal.password}
+				connectionTestQuery = "select 1"
+			}
+			migration = true
+			flyway.locations = "db/sqlserver/migration"
+		}
+		# BBDD externa de soporte
+		external {
+			profile = "slick.jdbc.SQLServerProfile$"
+			db {
+				url = ${com.rentalcar.db.external.url}
+				driver = "net.sourceforge.jtds.jdbc.Driver"
+				user = ${com.rentalcar.db.external.user}
+				password = ${com.rentalcar.db.external.password}
+				connectionTestQuery = "select 1"
+				readOnly = true
+				autoCommit = false
+			}
+		}
+		# BBDD Precios Competencias
+		competition_prices {
+			profile = "slick.jdbc.SQLServerProfile$"
+			db {
+				url = ${com.rentalcar.db.competition_prices.url}
+				driver = "net.sourceforge.jtds.jdbc.Driver"
+				user = ${com.rentalcar.db.competition_prices.user}
+				password = ${com.rentalcar.db.competition_prices.password}
+				connectionTestQuery = "select 1"
+				readOnly = true
+        autoCommit = false
+        isolation = "READ_UNCOMMITTED"
+			}
+		}
+	}
+}
+
+# Configuración del servidor Redis
+redis {
+  host = ${com.rentalcar.db.redis.host}
+  port = ${com.rentalcar.db.redis.port}
+  dataStoreKey = ${com.rentalcar.db.redis.dataStoreKey}
+  eventIdStoreKey = ${com.rentalcar.db.redis.eventIdStoreKey}
+  database = ${com.rentalcar.db.redis.database}
+  {% if pricing_db_redis_secret is defined %}
+secret = ${com.rentalcar.db.redis.secret}
+  {% endif %}
+}
+

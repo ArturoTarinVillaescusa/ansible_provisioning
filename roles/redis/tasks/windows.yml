@@ -1,0 +1,43 @@
+---
+  - name: "Check to see if Redis is installed"
+    win_stat: path='{{ redis_expand_dir }}/redis-server.exe'
+    register: redis_installed
+
+  - name: "Download artifact"
+    win_get_url:
+      url: "{{ nexus_artifact_path }}"
+      dest: "{{ redis_artifact_dest }}"
+    when: not redis_installed.stat.exists
+
+  - name: "Unzip artifact"
+    win_command: "7z x {{ redis_artifact_dest }} -o{{ redis_expand_dir }}"
+    args:
+      chdir: "{{ temp_path }}"
+    when: not redis_installed.stat.exists
+
+  - name: "Ensure that Redis is present on the global system path"
+    win_path:
+      elements: "{{ redis_expand_dir }}"
+
+  - name: "Install Redis Server as Service"
+    win_package:
+      path: '{{ redis_expand_dir }}/redis-server.exe'
+      creates_service: "Redis"
+      arguments: "--service-install {{ redis_expand_dir }}/redis.windows.conf --loglevel verbose"
+      state: present
+    args:
+      chdir: "{{ redis_expand_dir }}"
+    register: redis_install
+    #when: not redis_installed.stat.exists
+
+  - name: "Startup Redis Service"
+    win_service:
+      name: Redis
+      state: restarted
+    when: redis_install is changed or restart_redis | default('false') | bool
+
+  - name: "Set maxheap value"
+    win_lineinfile:
+      path: "{{ redis_expand_dir }}/redis.windows.conf"
+      line: "maxheap {{ redis_maxheap }}"
+    when: redis_maxheap is defined

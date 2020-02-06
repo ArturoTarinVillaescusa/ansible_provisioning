@@ -1,0 +1,5 @@
+---
+
+#### CDVSID Config
+
+project_installation_dest: "/opt/daemons/cdvsid"

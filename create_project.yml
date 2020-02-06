@@ -1,0 +1,42 @@
+#
+# Playbook to create and configure in Bitbucket+Jenkins new projects
+#
+# Requirements:
+#
+#    python-jenkins: pip install python-jenkins
+#
+# Variables:
+#
+#    repo_name: My Test
+#    repo_project_key: IC
+#    nexus_repo_name: MavenGoldcar
+#    build_job: false
+#    build_deliver: false
+#    build_view: false
+#    build_branch:
+#     - develop
+#     - release
+#     - hotfix
+#    build_builders_delphi: false
+#    build_builders_gradle: false
+#    build_builders_gradle_plugin: "gradle@1.28"
+#    build_builders_gradle_tasks: "test zip"
+#    build_builders_batchfile: false
+#    build_builders_batchfile_command: "activator.bat clean packageAll"
+#    build_builders_sonar: false
+#    build_publishers_archiver: false
+#    build_publishers_archiver_artifact_path: "build/distributions/*.zip"
+#    build_publishers_junit: false
+#    build_publishers_junit_results_path: "build/test-results/test/*.xml"
+#    build_publishers_jacoco: false
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=host create_project.yml
+#
+
+- hosts: all
+  gather_facts: false
+  roles:
+    - { name: create_project }

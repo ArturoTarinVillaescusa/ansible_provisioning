@@ -1,0 +1,67 @@
+#
+# Playbook to deploy NGINX
+#
+# Variables:
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=nginx nginx.yml
+#
+- hosts: all
+  gather_facts: true
+  vars:
+    ssl_template_enable: true
+    main_template_enable: true
+    main_template_error_level: "notice"
+    main_template_worker_connections: "8096"
+    main_template_worker_rlimit_nofile: "40000"
+    main_template_multi_accept: "on"
+    http_template_enable: true
+    http_template_tcp_nopush: "on"
+    http_template_keepalive: true
+    http_template_keepalive_timeout: "300s"
+    http_template_keepalive_requests: "100000"
+    http_template_proxy_buffering: "off"
+    http_template_proxy_buffer_size: "128k"
+    http_template_proxy_buffers: "100  128k"
+    http_template_proxy_http_version: "1.1"
+    http_template_items:
+      - name: wsgw.rentalcar.es
+        servername: wsgw.rentalcar.es
+        ssl: true
+        ssl_certificate_path: /etc/nginx/ssl/cert.crt
+        ssl_certificate_key_path: /etc/nginx/ssl/cert.key
+        port: 443
+        proxy_set: true
+        locations:
+         - name: tasarauto
+           path: /tasarauto
+           proxy_redirect: "off"
+           rewrite: "/tasarauto/(.*) /$1 break"
+           proxy_set_header: "Host tasarauto.rentalcar.es"
+           proxy_pass: "http://backend"
+      - name: sartest.rentalcar.es
+        servername: sartest.rentalcar.es
+        ssl: true
+        ssl_certificate_path: /etc/nginx/ssl/cert.crt
+        ssl_certificate_key_path: /etc/nginx/ssl/cert.key
+        port: 9443
+        proxy_set: true
+        locations:
+         - name: root
+           path: /
+           proxy_redirect: "off"
+           proxy_set_header: "Host sartest.rentalcar.es"
+           proxy_pass: "http://backend-sar"
+    upstream_template_enable: true
+    upstream_template_items:
+      - name: "backend"
+        address: "10.0.12.131"
+        port: "8081"
+      - name: "backend-sar"
+        address: "10.0.12.25"
+        port: "9002"
+
+  roles:
+    - { role: bootstrap }
+    - { role: nginx }

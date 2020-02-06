@@ -1,0 +1,21 @@
+# If client authentication is not required by the broker,
+# the following is a minimal configuration example:
+security.protocol=SSL
+ssl.truststore.location={{ kerberos.jks_store_folder }}/kafka.client.truststore.jks
+ssl.truststore.password={{ kerberos.storepass_secret }}
+
+# If client authentication is required, then a keystore must be created for
+# each client, and the brokers’ truststores must trust the certificate in the
+# client’s keystore. This may be done using commands that are similar to what
+# we used for the broker keystore, in the /root/.ssl/generateKeysAndCertifications.sh
+# file, were we generate client keystores that the broker truststore will trust.
+
+# This can also be found in BitBuckets's folder
+# ansible/roles/kafkakerberoslocalserver/templates/generateKeysAndCertificates.sh.j2
+
+# So in this case where client authentication is required, the following
+# configuration must also be used:
+
+ssl.keystore.location={{ kerberos.jks_store_folder }}/kafka.client.keystore.jks
+ssl.keystore.password={{ kerberos.storepass_secret }}
+ssl.key.password={{ kerberos.keypass_secret }}

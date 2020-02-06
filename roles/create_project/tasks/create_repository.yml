@@ -1,0 +1,40 @@
+- name: Check Bitbucket Repository status
+  local_action:
+    module: uri
+    url: "{{ bitbucket_url }}/rest/api/1.0/projects/{{ repo_project_key }}/repos/{{ repo_slug }}"
+    method: GET
+    force_basic_auth: yes
+    user: "{{ bitbucket_user }}"
+    password: "{{ bitbucket_pass}}"
+    body_format: json
+    validate_certs: no
+    status_code: 200,404
+  register: repository_exists
+
+- name: Create Bitbucket Repositories
+  local_action:
+    module: uri
+    url: "{{ bitbucket_url }}/rest/api/1.0/projects/{{ repo_project_key }}/repos/"
+    method: POST
+    force_basic_auth: yes
+    user: "{{ bitbucket_user }}"
+    password: "{{ bitbucket_pass}}"
+    body: "{{ lookup('template','repository_info.json.j2', convert_data=False) | string }}"
+    body_format: json
+    validate_certs: no
+    status_code: 201
+  when: repository_exists.status == 404
+  register: get_projects
+
+- name: Check Bitbucket Repository status
+  local_action:
+    module: uri
+    url: "{{ bitbucket_url }}/rest/api/1.0/projects/{{ repo_project_key }}/repos/{{ repo_slug }}"
+    method: GET
+    force_basic_auth: yes
+    user: "{{ bitbucket_user }}"
+    password: "{{ bitbucket_pass}}"
+    body_format: json
+    validate_certs: no
+    status_code: 200,404
+  register: repository_exists

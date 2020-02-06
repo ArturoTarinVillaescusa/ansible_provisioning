@@ -1,0 +1,44 @@
+#
+# Playbook to deploy SARSISBRIDGE
+#
+# Variables:
+#
+# sarsisbridge_version: SARSISBRIDGE version to install (1.4.5)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=sarsisbridgehosts sarsisbridged_deploy.yml --extra-vars "sarsisbridged_version=1.02.000-683a7a0"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/sarsisbridged_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_templates:
+      - name: "CA cert file"
+        src: "roles/sarsisbridged_deploy/templates/certificados/CA_cert.pem.j2"
+        dest: "certificados{{ path_separator }}CA_cert.pem"
+      - name: "PEM file"
+        src: "roles/sarsisbridged_deploy/templates/certificados/Cert_privatekey.pem.j2"
+        dest: "certificados{{ path_separator }}Cert_privatekey.pem"
+      - name: "CERT file"
+        src: "roles/sarsisbridged_deploy/templates/certificados/rentalcar-sarsis.cert.j2"
+        dest: "certificados{{ path_separator }}rentalcar-sarsis.cert"
+      - name: "SARSISD WebServer Properties"
+        src: "roles/sarsisbridged_deploy/templates/SARSISBRIDGEDWebServer.ini.j2"
+        dest: "SARSISBRIDGEDWebServer.ini"
+    project_command_copy_remote_files: []
+    project_pre_deploy_commands: []
+    project_post_deploy_commands: []
+  pre_tasks:
+    - name: Check ansible config for SARSISBRIDGED
+      assert:
+        that:
+          - "sarsisbridged_version is defined"
+
+    - include_tasks: roles/sarsisbridged_operate/tasks/main.yml operation=stop
+  roles:
+    - sarsisbridged_deploy
+  post_tasks:
+    - include_tasks: roles/sarsisbridged_operate/tasks/main.yml operation=start

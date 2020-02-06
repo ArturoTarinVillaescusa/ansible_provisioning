@@ -1,0 +1,22 @@
+---
+
+#### ARTIFACT Info
+
+nexus_url: "http://desreposrv.goldcar.es:10081"
+
+nexus_repository: "{{ nexus_url }}/repository/Daemons/"
+nexus_artifact_name: "GalaD.exe"
+nexus_artifact_version: "{{ galad_version | default('1.04.000-7da47b4') }}"
+nexus_artifact_file: "{{ nexus_artifact_name }}-{{ nexus_artifact_version }}.7z"
+nexus_artifact_path: "{{ nexus_repository }}{{ nexus_artifact_file }}"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+project_release: "{{ galad_version }}"
+project_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_extract_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_final_filename: "{{ nexus_artifact_file }}"
+project_deploy_strategy: "nexus"
+project_keep_releases: "5"
+project_unwanted_items: [ '.git', 'GalaD.plantilla' ]

@@ -1,0 +1,128 @@
+#!/bin/bash
+
+mkdir -p ~/.ssl
+cd ~/.ssl
+
+# CREATE A CA AND ISSUE CERTIFICATES
+
+# Setup the Certificate Authority (CA). This will generate the ca-cert and the ca-key file
+# NEVER DISTRIBUTE THE “ca-key” FILE !!!!!!
+openssl req -new -newkey rsa:4096 -days {{ kerberos.validity_days }} -x509 \
+        -subj "/CN=Golcar-Kafka-Security-CA" -keyout ca-key -out ca-cert -nodes
+
+# Check the generated files
+ls -lrht
+cat ca-key
+cat ca-cert
+
+# CREATE A SERVER KEYSTORE AND TRUSTSTORE AND IMPORT THE SIGNED CERTIFICATES
+# SSL SETUP FOR KAFKA SERVERS
+
+# Generate a new key and store the output in the kafka.server.keystore.jks keystore file.
+# Our certificate validity is {{ kerberos.validity_days }} days, and as a password we are using “{{ kerberos.storepass_secret }}”.
+# The common name is the most important parameter, should be the public DNS of the Kafka server instance, "{{ fqdn }}".
+# The storetype is pkcs12, which is the de facto industry standard now a days.
+keytool -genkey -keystore kafka.server.keystore.jks -validity {{ kerberos.validity_days }} \
+    -storepass {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }} -dname "CN={{ kerberos. kerberos.kdc_hostname }}.{{ fqdn }}" \
+    -storetype pkcs12
+
+# Our Java keystore has been created: check it!
+ls -rlht
+
+# NEVER DISTRIBUTE THE “ca-key” FILE !!!!!!
+# NEVER DISTRIBUTE THE “kafka.server.keystore.jks” FILE !!!!!!
+
+# Check the content:
+keytool -list -v -keystore kafka.server.keystore.jks -storepass {{ kerberos.storepass_secret }}
+
+# Now we need to get a signed version certificate for our Kafka broker, so that all clients are able to verify if
+# the certificate of our Kafka broker is valid. We do it in two steps:
+
+# 1) getting a signing request out from our keystore in the "cert-file" file:
+keytool -keystore kafka.server.keystore.jks -certreq -file cert-file \
+    -storepass {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }}
+
+ls -lrth
+
+# 2) Send the "cert-file" to the CA, so that the CA is able to sign our certificate.
+#    In a real world scenario, we would now take our “cert-file” and send it to our Goldcar’s CA administrator
+#    via email or whatever, and we would get back a signed version of our certificate.
+#    But since we are going to get a “self-signed” certificate for our training purposes, and we already have
+#    created our own CA, we are now able to sign the certificate on our own. And for that to happen we are going
+#    to use the openssl command.
+openssl x509 -req -CA ca-cert -CAkey ca-key -in cert-file -out cert-signed \
+  -days {{ kerberos.validity_days }} -CAcreateserial -passin pass:{{ kerberos.storepass_secret }}
+
+# The generated “cert-signed” includes our signed certificate for the Kafka broker. The content can be seen as well:
+ls -rlht
+keytool -printcert -v -file cert-signed
+
+# “cert-file” and “ca-cert.srl” can be deleted right now.
+rm cert-file ca-cert.srl
+
+# Import the public ca-cert file into the kafka.server.truststore.jks file
+keytool -keystore kafka.server.truststore.jks -alias CARoot -import -file ca-cert \
+    -storepass  {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }} -noprompt
+
+ls -rlht
+
+# Import the public (ca-cert) and signed (cert-signed) certificates into kafka.server.keystore.jks
+keytool -keystore kafka.server.keystore.jks -alias CARoot -import -file ca-cert \
+    -storepass  {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }} -noprompt
+keytool -keystore kafka.server.keystore.jks -import -file cert-signed \
+    -storepass {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }} -noprompt
+
+# CREATE A CLIENT KEYSTORE AND TRUSTSTORE AND IMPORT THE SIGNED CERTIFICATES
+# SSL SETUP FOR KAFKA CLIENTS
+
+# Generate a kafka.client.keystore.jks to use in our client application.
+#
+keytool -genkey -keystore kafka.client.keystore.jks -validity {{ kerberos.validity_days }} \
+    -storepass {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }} \
+    -dname "CN={{  kerberos.kdc_hostname }}.{{ fqdn }}" -alias my-local-pc \
+    -storetype pkcs12
+
+# Sign the kafka.client.keystore.jks with our CA. We do it in two steps:
+
+# 1) getting a signing request out from our keystore in the "client-cert-sign-request" file:
+keytool -keystore kafka.client.keystore.jks -certreq -file client-cert-sign-request \
+  -alias my-local-pc -storepass {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }}
+
+ls -lrht
+
+# 2) Send the "client-cert-sign-request" to the CA, so that the CA is able to sign our certificate.
+#    In a real world scenario, we would now take our “cert-file” and send it to our Goldcar’s CA administrator
+#    via email or whatever, and we would get back a signed version of our certificate.
+#    But since we are going to get a “self-signed” certificate for our training purposes, and we already have
+#    created our own CA, we are now able to sign the certificate on our own. And for that to happen we are going
+#    to use the openssl command.
+openssl x509 -req -CA ca-cert -CAkey ca-key -in client-cert-sign-request -out client-cert-signed \
+    -days {{ kerberos.validity_days }} -CAcreateserial -passin pass:{{ kerberos.storepass_secret }}
+
+# Import the public ca-cert file into the kafka.server.truststore.jks file
+keytool -keystore kafka.client.keystore.jks -alias CARoot -import -file ca-cert \
+    -storepass  {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }} -noprompt
+
+# Import the signed cert, “client-cert-signed”, specifying the alias that we assigned to it in the creation step:
+
+keytool -keystore kafka.client.keystore.jks -alias my-local-pc \
+     -import -file client-cert-signed -storepass {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }} -noprompt
+
+# Generate a Kafka Client truststore so that our clients can accept our Kafka cluster SSL endpoint as a valid place
+# to publish or subscribe messages
+keytool -keystore kafka.client.truststore.jks -alias CARoot -import -file ca-cert \
+    -storepass {{ kerberos.storepass_secret }} -keypass {{ kerberos.keypass_secret }} -noprompt
+
+ls -lrth
+
+# Check the content:
+keytool -list -v -keystore kafka.client.truststore.jks -storepass {{ kerberos.storepass_secret }}
+
+# Allow the user kafka to access to the kafka.server.keystore.jks and kafka.server.truststore.jks
+# and kafka.client.truststore.jks files
+mkdir {{ kerberos.jks_store_folder }}
+cp ./kafka.*.jks {{ kerberos.jks_store_folder }}
+chown -R kafka.kafka {{ kerberos.jks_store_folder }}
+
+# SELFDESTROY THIS FILE
+# rm $0

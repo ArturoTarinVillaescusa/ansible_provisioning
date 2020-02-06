@@ -1,0 +1,10 @@
+---
+- import_tasks: ../conf/setup-status.yml
+
+- name: "(Install Amplify: All NGINX) Download NGINX Amplify Script"
+  get_url:
+    url: https://github.com/nginxinc/nginx-amplify-agent/raw/master/packages/install.sh
+    dest: /tmp/install.sh
+
+- name: "(Install Amplify: All NGINX) Install NGINX Amplify"
+  shell: API_KEY='{{ amplify_key }}' sh /tmp/install.sh -y

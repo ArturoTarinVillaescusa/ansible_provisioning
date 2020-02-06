@@ -1,0 +1,10 @@
+- name: Test SARSISD communicacion
+  uri:
+    url: http://{{ ansible_fqdn }}:{{ service_port }}
+    method: POST
+    body: "{{ lookup('file','roles/sarsisd_operate/files/XML_TestCommunication.xml') }}"
+    status_code: 200
+    headers:
+      Content-Type: "application/xml"
+    body_format: raw
+  delegate_to: localhost

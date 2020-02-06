@@ -1,0 +1,18 @@
+#
+# Playbook to deploy TARSID
+#
+# Variables:
+#
+# operation: start|stop|restart
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=tarsidhosts tarsid_operate.yml --extra-vars "operation=restart"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/tarsid_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  roles:
+    - tarsid_operate

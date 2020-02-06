@@ -1,0 +1,6 @@
+---
+
+#### SARSISBRIDGED Config
+
+project_installation_dest: "C:\\Daemons\\SARSISBRIDGED"
+service_port: "9001"

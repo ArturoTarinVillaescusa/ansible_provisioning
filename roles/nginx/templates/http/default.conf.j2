@@ -1,0 +1,45 @@
+# {{ ansible_managed }}
+server {
+    listen       {{ item.port }};
+    server_name  {{ item.servername }};
+
+{% if item.proxy_set | default('false') | bool %}
+    proxy_set_header  X-Real-IP       $remote_addr;
+    proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+{% endif %}
+
+{% if item.ssl | default('false') | bool %}
+    ssl on;
+    ssl_certificate {{ item.ssl_certificate_path }};
+    ssl_certificate_key {{ item.ssl_certificate_key_path }};
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 10m;
+{% endif %}
+
+{% if item.locations is defined %}
+{% for location in item.locations %}
+    location {{ location.path }} {
+{% if location.proxy_redirect is defined %}
+       proxy_redirect {{ location.proxy_redirect }};
+{% endif %}
+{% if location.rewrite is defined %}
+       rewrite {{ location.rewrite }};
+{% endif %}
+{% if location.proxy_set_header is defined %}
+       proxy_set_header {{ location.proxy_set_header }};
+{% endif %}
+{% if location.proxy_pass is defined %}
+       proxy_pass {{ location.proxy_pass }};
+{% endif %}
+{% if location.enable_ws is defined %}
+
+       # enables WS support
+       proxy_http_version 1.1;
+       proxy_set_header Upgrade $http_upgrade;
+       proxy_set_header Connection "upgrade";
+{% endif %}
+    }
+{% endfor %}
+{% endif %}
+
+}

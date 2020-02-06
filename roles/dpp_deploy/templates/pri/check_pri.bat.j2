@@ -1,0 +1,5 @@
+@ECHO OFF
+SETLOCAL
+title PRI VERSION STOP
+FOR /F "TOKENS=2 DELIMS=," %%I IN ('tasklist /v /fo csv ^| find /i "{{ pricing_pri_window_title | default('PRI VERSION') }}"') DO {{ tools_path }}\\PSTools\\pskill.exe -t -accepteula -nobanner %%I
+ENDLOCAL

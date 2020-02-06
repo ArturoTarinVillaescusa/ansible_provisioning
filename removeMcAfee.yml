@@ -1,0 +1,34 @@
+- hosts: all
+  gather_facts: true
+  tasks:
+    - name: Uninstall McAfee Agent
+      win_package:
+        path: C:\Program Files\McAfee\Agent\x86\frminst.exe
+        creates_path: C:\Program Files\McAfee\Agent\x86\frminst.exe
+        arguments: /forceuninstall
+        state: absent
+
+    - name: Uninstall McAfee Agent x86
+      win_package:
+        path: C:\Program Files (x86)\McAfee\Common Framework\frminst.exe
+        creates_path: C:\Program Files (x86)\McAfee\Common Framework\frminst.exe
+        arguments: /forceuninstall
+        state: absent
+
+    - name: Uninstall McAfee VirusScan v880
+      win_package:
+        path: C:\Program Files (x86)\McAfee\VirusScan Enterprise\RepairCache\vse880.msi
+        creates_path: C:\Program Files (x86)\McAfee\VirusScan Enterprise\RepairCache\vse880.msi
+        state: absent
+    
+    - name: Copy source CB installer locally
+      win_copy:
+        src: /usr/sbin/installer_vista_win7_win8-64-3.1.0.150.msi
+        dest: c:\temp\
+
+    - name: Install Carbon Black
+      win_package:
+        path: C:\Temp\installer_vista_win7_win8-64-3.1.0.150.msi
+        creates_path: C:\Program Files\Confer
+        arguments: COMPANY_CODE=WR4IS637WR4SWB7YRJV
+        state: present

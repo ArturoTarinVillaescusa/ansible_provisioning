@@ -1,0 +1,21 @@
+---
+# tasks file for performance_sis
+
+- name: "Create Goldcar folder"
+  file: "path='{{ rentalcar_path }}' state='directory'"
+
+- name: "Copy Project SoapUI file"
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ rentalcar_path }}/{{ item }}"
+    mode: 755
+    backup: yes
+  with_items:
+    - mockSIS.xml
+    - soapui_mockservicerunner_script.sh
+  become: true
+
+- name: "Execute Project SoapUI file"
+  shell: nohup ./soapui_mockservicerunner_script.sh restart > /var/log/soapui_mockSIS.log 2>&1 &
+  args:
+    chdir: "{{ rentalcar_path }}"

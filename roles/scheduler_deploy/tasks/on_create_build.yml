@@ -1,0 +1,15 @@
+---
+
+- name: Create Scheduler directory needed folders
+  win_file: "path='{{ project_root }}{{ path_separator }}{{ project_source_path }}{{ path_separator }}{{ item }}' state='directory'"
+  with_items:
+    - "{{ project_artifact_name }}"
+  when: ansible_os_family | lower == "windows"
+
+- debug: msg="{{ project_root }}{{ path_separator }}{{ project_source_path }}"
+
+- name: Copy files to new release dir
+  win_command: "xcopy {{ project_artifact_name }}.jar {{ project_root }}{{ path_separator }}{{ project_source_path }}{{ path_separator }}{{ project_artifact_name }} /i /Y"
+  args:
+    chdir: "{{ project_root }}{{ path_separator }}{{ project_source_path }}"
+  when: ansible_os_family | lower == "windows"

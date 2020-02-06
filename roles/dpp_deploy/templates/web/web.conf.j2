@@ -1,0 +1,282 @@
+##############################
+#  CONFIGURACIÓN DEL MÓDULO  #
+##############################
+
+com.rentalcar {
+	web {
+	    #Hostname/IP y puerto del nodo akka
+		akka.hostname = "{{ pricing_web_akka_hostname | default('127.0.0.1') }}"
+		akka.port = {{ pricing_web_akka_port | default('2550') }}
+	}
+
+	#Localización del módulo system. Estas claves han de ser idéntica a las claves de com.rentalcar.system del archivo de configuración del módulo system (system.conf)
+	system {
+		akka.hostname = "{{ pricing_system_akka_hostname | default('127.0.0.1') }}"
+		akka.port = {{ pricing_system_akka_port | default('2555') }}
+	}
+
+    #Configuración para la integración con Active directory
+    ldap-auth {
+        #Indica si la autentificación y autorización se realiza contra el Active Directory. Si es false se realiza contra la base de datos, como siempre, y el resto de claves de configuración no tienen efecto
+    	enabled = {{ pricing_ldap_enabled | default('false')}}
+
+        #El host y puerto del AD
+        host = "{{ pricing_ldap_host | default('127.0.0.1')}}"
+        port = {{ pricing_ldap_port | default('636') }}
+
+        #Indica si la conexión contra el AD es segura o no. Atención que el puerto suele ser distinto en ambos casos
+        secure = {{ pricing_ldap_secure | default('true')}}
+
+        #Credenciales del usuario LDAP para hacer bind y poder autentificar al usuario que intenta hacer login
+        bind-cn = "{{ pricing_ldap_bind_cn | default('CN=svc_asm,OU=ServiceUsers,DC=labcen,DC=local') }}"
+        bind-password = "{{ pricing_ldap_bind_password | default('changeme') }}"
+    }
+
+	rates {
+	    #Configuración de la carga automática de excels de tarifa
+		auto-upload {
+			# Establece si está activado el proceso automático de subida de Excels por directorio
+			active={{ pricing_rates_auto_load_active | default('true') }}
+
+			# Directorio (relativo o absoluto) de donde se cargan los excels
+			path="{{ pricing_rates_auto_load_path | default('C:/PricingSystem/BDSIGGERPricing') }}"
+
+			# Datos FTP para descargar los ficheros Excel
+			# Si se comenta esta sección, no se bajarán automáticamente los ficheros del FTP
+			ftp {
+                		hostname = "{{ pricing_rates_autoload_ftp_hostname | default('127.0.0.1') }}"
+		                port = {{ pricing_rates_auto_load_ftp_port | default('21') }}
+		                username = "{{ pricing_rates_auto_load_ftp_username | default('ftp') }}"
+		                password = "{{ pricing_rates_auto_load_ftp_password | default('changeme') }}"
+		                remote_dir = "{{ pricing_rates_auto_load_ftp_remote_dir | default('/') }}"
+			}
+		}
+	    #Configuración de la carga manual (mediante la interface web) de excels de tarifa
+		manual-upload {
+			# Directorio (relativo o absoluto) donde se copian temporalmente los ficheros a validar
+			path = "{{ pricing_rates_manual_load_path | default('C:/PricingSystem/BDSIGGERPricing') }}"
+		}
+	}
+
+	# Parámetros de configuración para conseguir la disponibilidad del SAR
+	availability {
+		end-point.url = "{{pricing_availability_end_point_url | default('http://127.0.0.1:9002/') }}"
+		auth {
+			default {
+				code = "{{pricing_availability_auth_default_code | default('default')}}"
+				password = "{{pricing_availability_auth_default_password | default('changeme')}}"
+				encrypted = {{pricing_availability_auth_default_encryted | default('false')}}
+			}
+		}
+		# Caché para la consulta de disponibilidad
+		cache {
+			duration = {{pricing_cache_duration | default('1 day')}}
+			# Path del fichero de log de la caché. Opcional
+			log.path = "{{pricing_cache_log_path | default('logs/') }}"
+		}
+	}
+
+	# Parámetros de configuración del servicio de precios de competencia via WS
+	competition_prices {
+		# URL del servicio de precios de competencia
+		ws.url = "{{pricing_competition_prices_ws_url | default('http://127.0.0.1:8080/competition-prices') }}"
+	}
+
+	#Fecha de corte para tarifes y reglas de franquiciados. No pueden ver ninguno de antes de esta fecha
+	franq.cutDate = "{{ pricing_franq_cutDate | default('2017-07-16') }}"
+
+    #Listado de PRI accesibles desde la interfaz web para consultas, debug de precios y alertas de desincronización. No es relevante para el funcionamiento de los PRI y/o su interacción con el system
+    availablePris = [
+    #Host y puerto del PRI. Debe coincidir con las claves com.rentalcar.pri.akka.hostname y com.rentalcar.pri.akka.port del pri.conf del PRI
+    {% for pri_host in available_pris %}
+        {
+            host = "{{ pri_host.name | default('127.0.0.1') }}",
+            port = {{ pri_host.port | default('2553') }},
+
+            #Número máximo de segundos antes de considerar que un PRI no está sincronizado
+            maxUnsynchronizedSeconds = {{ pricing_availablePris_max_unsynchronized_seconds | default('60') }}
+        },
+    {% endfor %}
+    ]
+
+	alert {
+		showTime = 24 # Número de horas que una alerta será visible trás su resolución
+	}
+
+	#Valores posibles: PROD, TEST
+    environment = "{{ pricing_environment | default('TEST') }}"
+}
+
+
+
+
+
+#############################################################################
+#                        A  T  E  N  C  I  Ó  N                             #
+# A partir de aquí mejor no tocar si no se sabe lo que se está haciendo ;-) #
+#############################################################################
+# Configuración común del cluster (proviene de core)
+include "cluster.conf"
+# Configuración común de las opciones de serialización (proviene de core)
+include "serialization.conf"
+# Configuración común del BBDD (proviene de core)
+include "db.conf"
+
+# This is the main configuration file for the application.
+# ~~~~~
+
+# Secret key
+# ~~~~~
+# The secret key is used to secure cryptographics functions.
+#
+# This must be changed for production, but we recommend not changing it in this file.
+#
+# See http://www.playframework.com/documentation/latest/ApplicationSecret for more details.
+play.http.secret.key = "7=pnkWlB2JD`MdG8Z=dMns?8/yOerdqonQJGV;P1tNdj]dUb^Ak/4Qo/Vm36VXTs"
+
+# Nuevos parámetros para Play 2.6
+play.assets {
+	path = "/public"
+	urlPrefix = "/assets"
+}
+
+# Desactiva las políticas de seguridad en la carga de scripts. Ver https://www.playframework.com/documentation/2.6.x/Migration26#SecurityHeadersFilter
+play.filters.headers.contentSecurityPolicy=null
+
+# Estable el proveedor. Ahora es necesario especificarlo explícitamente. Antes estaba establecido en el reference.conf
+play.crypto.provider = null
+
+# Permite que funcionen la llamadas ajax de jQuery
+play.filters.csrf.header.bypassHeaders {
+	X-Requested-With = "*"
+	Csrf-Token = "nocheck"
+}
+
+# Plugins activados: CSRF, CORS i Gzip
+play.filters.enabled = [play.filters.csrf.CSRFFilter, play.filters.headers.SecurityHeadersFilter, play.filters.gzip.GzipFilter]
+
+# Fin Nuevos parámetros para Play 2.6
+
+# The application languages
+# ~~~~~
+play.i18n.langs = [ "en" ]
+
+# Database configuration
+# ~~~~~
+# You can declare as many datasources as you want.
+# By convention, the default datasource is named `default`
+#
+
+# La configuración de las BBDD se ha trasladado al PS. Ver db.conf
+
+#play.evolutions.db.default.autoApply=true
+#play.evolutions.db.default.autoApplyDowns=true
+
+# La configuración de las BBDD se ha trasladado al PS. Ver db.conf
+
+play.evolutions.db.BDSIGGERSARG2.enabled=false
+
+# Para que la cookie de sessio no se pierda cada vez que se recarga la aplicación
+play.crypto.aes.transformation = AES/ECB/PKCS5Padding
+
+# Modulo que arranca la conexión con el Router de mensajes hacia RabbitMQ
+play.modules.enabled += "modules.ApplicationModule"
+
+# Implementación de la clase que gestiona los usuarios. Puede ser api.DummyUserApi y api.UserApi
+components.users = "api.UserApi"
+
+# Dirección del actor remoto RuleActor
+ruleService.address="akka.tcp://"${akka.cluster.name}"@"${com.rentalcar.system.akka.hostname}":"${com.rentalcar.system.akka.port}"/user/RuleActor"
+
+# Implementación del servicio de Upload Rates (api.RateUploader)
+components.rateUploader= "api.RateUploader"
+
+# Implementación del servicio de obtención de los precios de la competencia
+components.competitionPricesService = "api.WSCompetitionPriceApi"
+
+# Implementación del servidor de disponibilidad
+components.availabilityService = "api.SARAvailabilityApi"
+
+akka {
+	loglevel = "DEBUG"
+
+	remote {
+		netty.tcp {
+			hostname = ${com.rentalcar.web.akka.hostname}
+			port = ${com.rentalcar.web.akka.port}
+		}
+	}
+
+	// Hace que el ActorLogging sea mucho más simple
+	loggers = ["akka.event.slf4j.Slf4jLogger"]
+
+	// Con Akka-http, en dev hay problemas con las URI muy largas, como por ejemplo RuleList
+  // Ver https://stackoverflow.com/questions/45249694/play-2-6-uri-length-exceeds-the-configured-limit-of-2048-characters
+  http {
+  	parsing {
+  		max-uri-length = 4096
+  	}
+  }
+}
+
+excel {
+	principalSheetName="Tarifa"
+	v1.0 {
+		dateFormat="MM/dd/yyyy"
+		timeFormat="HH:mm"
+		tarifaSheetName="Tarifa"
+		importesTarifaSheetName="ImportesTarifa"
+		tarifaId="TARIFA"
+		startDate="Fecha Inicio Oferta"
+		endDate="Fecha Fin Oferta"
+		offerStartDate="Fecha Inicio Solicitud Oferta"
+		offerEndDate="Fecha Fin Solicitud Oferta"
+		fuelPolicy="Politica Combustible"
+		agencies="Agencias"
+		branches="Sucursales"
+		minDays="Minimo Dias"
+		roundPrice="Redondeo"
+		firstDivision="Division dias semana"
+		commercialPackage="Paquete"
+	}
+}
+
+# Configuración para el importador automático de Excels con tarifas
+auto_upload_rates {
+	# Establece si está activado el proceso automático de subida de Excels por directorio
+	active=${com.rentalcar.rates.auto-upload.active}
+	# Establece cuando tiene que empezar el proceso a ejecutarse desde que se arranca la app
+	# Para más info sobre los posibles valores: https://github.com/typesafehub/config/blob/master/HOCON.md#duration-format
+	scheduleStart=5 seconds
+	# Establece cuando cuanto se tiene que ejecutar el proceso
+	# Para más info sobre los posibles valores: https://github.com/typesafehub/config/blob/master/HOCON.md#duration-format
+	scheduleEvery=1 minute
+	# Cantidad de actores que trabajarán en paralelo para insertar Excels en la base de datos
+	# Si se ponen demasiados puede que se colapse la base de datos
+	workers=2
+	# Directorio (relativo o absoluto) de donde se cargan los excels
+	path=${com.rentalcar.rates.auto-upload.path}
+	# Datos FTP para descargar los ficheros Excel
+	# Si se comenta esta sección, no se bajarán automáticamente los ficheros del FTP
+	ftp {
+	  hostname = ${com.rentalcar.rates.auto-upload.ftp.hostname}
+	  port = ${com.rentalcar.rates.auto-upload.ftp.port}
+	  username = ${com.rentalcar.rates.auto-upload.ftp.username}
+	  password = ${com.rentalcar.rates.auto-upload.ftp.password}
+	  remote_dir = ${com.rentalcar.rates.auto-upload.ftp.remote_dir}
+	  local_dir = ${com.rentalcar.rates.auto-upload.path}
+	}
+}
+
+# Configuración para el importador manual de Excels con tarifas
+upload_rates {
+	# Cantidad de actores que trabajarán en paralelo para insertar Excels en la base de datos
+	# Si se ponen demasiados puede que se colapse la base de datos
+	workers=1
+	# Directorio (relativo o absoluto) donde se copian temporalmente los ficheros a validar
+	processing_path = ${com.rentalcar.rates.manual-upload.path}
+}
+
+#Nombre de la etiqueta para los tests de integración
+integrationTestKey = "integrationTestsId"
+

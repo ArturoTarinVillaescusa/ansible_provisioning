@@ -1,0 +1,109 @@
+# 7Zip
+  - name: "Check to see if 7Zip is installed"
+    win_stat: path='C:\Program Files\7-Zip\7z.exe'
+    register: zip7_installed
+
+  - name: "Download 7Zip"
+    win_get_url:
+      url: http://desreposrv:10081/repository/buildTools/7z.exe
+      dest: "{{ temp_path }}{{ path_separator }}7z.exe"
+    when: not zip7_installed.stat.exists
+
+  - name: "Install 7zip and use a file version for the installation check"
+    win_package:
+      path: "{{ temp_path }}{{ path_separator }}7z.exe"
+      creates_path: C:\Program Files\7-Zip\7z.exe
+      arguments: /S
+      creates_version: 16.04
+      state: present
+    when: not zip7_installed.stat.exists
+
+  - name: "Ensure that 7-Zip is present on the global system path"
+    win_path:
+      elements: C:\Program Files\7-Zip\
+
+#  ## PSTools
+  - name: Create PSTools needed folder
+    win_file: "path='{{ tools_path }}/{{ item }}' state='directory'"
+    with_items:
+      - PSTools
+    when: ansible_os_family | lower == "windows"
+
+  - name: "Check to see if PSTools is installed"
+    win_stat: path='{{ tools_path }}\PSTools\PSExec64.exe'
+    register: pstools_installed
+
+  - name: "Upload PSTools"
+    win_copy:
+      src: windows/PSTools.zip
+      dest: "{{ temp_path }}{{ path_separator }}PSTools.zip"
+    when: not pstools_installed.stat.exists
+
+  - name: "Unzip PSTools file"
+    win_unzip:
+      src: "{{ temp_path }}{{ path_separator }}PSTools.zip"
+      dest: "{{ temp_path }}{{ path_separator }}PSTools"
+      creates: "{{ temp_path }}{{ path_separator }}PSTools{{ path_separator }}PSExec64.exe"
+    when: not pstools_installed.stat.exists
+
+  - name: "Copy PSTools file to Desktop"
+    win_command: CMD /C "MOVE /Y {{ item.src }} {{ item.dest }}"
+    args:
+      chdir: "{{ temp_path }}\\PSTools\\"
+    with_items:
+      - {src: "PSExec64.exe", dest: "{{ tools_path }}\\PSTools\\PSExec64.exe"}
+      - {src: "pskill.exe", dest: "{{ tools_path }}\\PSTools\\pskill.exe"}
+    when: not pstools_installed.stat.exists
+
+#  ## CMTrace
+  - name: Create CMTrace needed folder
+    win_file: "path='{{ tools_path }}/{{ item }}' state='directory'"
+    with_items:
+      - CMTrace
+
+  - name: "Check to see if CMTrace is installed"
+    win_stat: path='{{ tools_path }}\CMTrace\CMTrace.exe'
+    register: cmtrace_installed
+
+  - name: "Upload CMTrace"
+    win_copy:
+      src: windows/CMTrace.exe
+      dest: "{{ tools_path }}{{ path_separator }}CMTrace{{ path_separator }}CMTrace.exe"
+    when: not cmtrace_installed.stat.exists
+
+## Notepad++
+  - name: "Check to see if Notepad++ is installed"
+    win_stat: path="C:{{ path_separator }}Program Files (x86){{ path_separator }}Notepad++{{ path_separator }}notepad++.exe"
+    register: notepadplusplus_installed
+
+  - name: "Upload Notepad++"
+    win_copy:
+      src: windows/npp.7.4.2.Installer.exe
+      dest: "{{ temp_path }}{{ path_separator }}npp.7.4.2.Installer.exe"
+    when: not notepadplusplus_installed.stat.exists
+
+  - name: Install notepad++
+    win_package:
+      path: "{{ temp_path }}{{ path_separator }}npp.7.4.2.Installer.exe"
+      creates_path: C:{{ path_separator }}Program Files (x86){{ path_separator }}Notepad++{{ path_separator }}notepad++.exe
+      arguments: /S
+      creates_version: 16.04
+      state: present
+    when: not notepadplusplus_installed.stat.exists
+
+  ## Region
+
+  # Set format, location and unicode to Spanish-Spain and copy settings
+  - win_region:
+      location: 217
+      format: es-ES
+      unicode_language: es-ES
+      copy_settings: True
+    register: result
+
+  ## Timezone
+
+  - name: Set timezone to 'Romance Standard Time (Madrid)' (GMT+01:00)
+    win_timezone:
+      timezone: Romance Standard Time
+

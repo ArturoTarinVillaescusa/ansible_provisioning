@@ -1,0 +1,91 @@
+#
+# Playbook to publish information to DevOps Dashboard
+#
+# Variables:
+#
+# graphite_host: Graphite server listening for metrics and events
+#
+# graphite_port: Graphite Carbon port listening for events
+#
+# graphite_carbon_port: Graphite Carbon port listening for metrics
+#
+# type: Type of task to execute
+#   - allowed values:
+#        deploy
+#        rollback
+#
+# operation: Operation to execute
+#   - allowed values:
+#        start
+#        end
+#
+# mode: Operation mode
+#   - allowed values:
+#        manual
+#        automatic
+#
+# deployer: Who performs the task
+#
+# app: Application name
+#
+# version: Version of the current application
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=localhost publish_to_devops_dashboard.yml --extra-vars "type=deploy operation=start deployer='jenkins space' app=pricing version=2.6.1 graphite_host=192.168.56.101 graphite_port=81 graphite_carbon_port=2003"
+#
+
+- hosts: all
+  gather_facts: true
+  tasks:
+    - name: "Get Start Time for end operations"
+      local_action:
+        module: uri
+        url: "http://{{ graphite_host }}:{{ graphite_port }}/render?target=devops.{{ type | lower }}.{{ app | lower }}.{{ version | replace('.', '_') }}.start&format=json&noNullPoints"
+        method: GET
+        return_content: yes
+        status_code: 200
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+      register: json_response
+      when: operation == "end"
+
+    - name: "Calculate amount_of_time"
+      set_fact:
+        amount_of_time: "{{ ansible_date_time.epoch | int - json_response.json[0].datapoints[0][1] | int}}"
+      when: operation == "end"
+
+    - name: "Send Graphite Metric"
+      local_action:
+        module: graphite_metric
+        server: "{{ graphite_host }}"
+        port: "{{ graphite_carbon_port }}"
+        path: "{{ item.name }}"
+        value: "{{ item.value }}"
+      with_items:
+        - { "name": "devops.{{ type | lower }}.{{ app | lower }}.{{ operation | lower }}", "value": 1 }
+        - { "name": "devops.{{ type | lower }}.{{ app | lower }}.{{ version | replace('.', '_') }}.{{ operation | lower }}", "value": 1 }
+        - { "name": "devops.{{ type | lower }}.{{ app | lower }}.{{ version | replace('.', '_') }}.{{ mode | default('manual') | lower }}.{{ operation | lower }}", "value": 1 }
+
+    - name: "Send Amount of Time Graphite Metric"
+      local_action:
+        module: graphite_metric
+        server: "{{ graphite_host }}"
+        port: "{{ graphite_carbon_port }}"
+        path: "{{ item.name }}"
+        value: "{{ item.value }}"
+      with_items:
+        - { "name": "devops.{{ type | lower }}.{{ app | lower }}.amounttime", "value": "{{ amount_of_time }}" }
+        - { "name": "devops.{{ type | lower }}.{{ app | lower }}.{{ version | replace('.', '_') }}.amounttime", "value": "{{ amount_of_time }}" }
+        - { "name": "devops.{{ type | lower }}.{{ app | lower }}.{{ version | replace('.', '_') }}.{{ mode | default('manual') | lower }}.amounttime", "value": "{{ amount_of_time }}" }
+      when: operation == "end"
+
+    - name: "Send Graphite Event"
+      local_action:
+        module: graphite_event
+        url: "http://{{ graphite_host }}:{{ graphite_port }}/events/"
+        what: "{{ app  }} {{ version }} - {{ type }} {{ operation }}"
+        tags: "{{ type }} {{ type }}-{{ operation }} {{ app }} {{app}}-{{ version }} {{ deployer | title | replace(' ', '') }} {{ mode | default('manual') }}"
+        data: "{{ operation | title }} {{ type | title }} of {{ app | title }} {{ version }}"

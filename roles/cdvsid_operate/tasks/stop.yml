@@ -1,0 +1,35 @@
+  - name: "Stop CDV"
+    debug: msg="Stopping CDV"
+
+  - name: "Copy Deactivate SQL file"
+    local_action:
+      module: template
+      src: "roles/cdvsid_operate/templates/sql/deactivate_service.sql.j2"
+      dest: "/tmp/deactivate_cdv.sql"
+
+  - name: "Deactivate CDV"
+    local_action:
+      module: mssql_db
+      name: 'BDSIGGER'
+      login_host: '{{ cdv_db_host }}'
+      login_user: '{{ cdv_db_user }}'
+      login_password: '{{ cdv_db_password }}'
+      login_port: '{{ cdv_db_port }}'
+      state: import
+      target: '/tmp/deactivate_cdv.sql'
+    register: deactivate_cdv_db
+
+  - name: "Remove Deactivate SQL file"
+    local_action:
+      module: file
+      state: absent
+      path: "/tmp/deactivate_cdv.sql"
+
+  - name: "Wait to ensure no task processing"
+    pause:
+      seconds: 30
+
+  - name: "Stop CDV service"
+    win_command: "{{ tools_path }}{{ path_separator }}PSTools{{ path_separator }}pskill.exe -accepteula -nobanner CDVSID chdir={{ project_root }}{{ path_separator }}current"
+    register: kill_cdv_command
+    failed_when: "'Process does not exist' not in kill_cdv_command.stdout and 'Process CDVSID killed' not in kill_cdv_command.stdout"

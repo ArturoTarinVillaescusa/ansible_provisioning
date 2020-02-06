@@ -1,0 +1,19 @@
+@echo off
+mode 101,24
+
+REM ESTA PARTE INCLUYE LA VERSION EN EL TITULO
+REM --------------------------------------------------------------------
+setlocal enabledelayedexpansion
+set SEPARATOR=/
+set filecontent=
+for /f "delims=" %%a in (C:\Microservicios\Tasarauto\current\version.txt) do (
+  set currentline=%%a
+  set filecontent=!filecontent!!currentline!
+)
+title Tasarauto %filecontent%
+REM --------------------------------------------------------------------
+
+set "RUN_HOME=%~dp0"
+set RUN_HOME=%RUN_HOME:~0,-1%
+
+java -Dspring.profiles.active={{ tasarauto_env }} -jar {{ project_artifact_name }}.jar "Tasarauto" 2 {{ tasarauto_port }} "{{ tasarauto_hostname }}" "{{ tasarauto_scheduler }}"

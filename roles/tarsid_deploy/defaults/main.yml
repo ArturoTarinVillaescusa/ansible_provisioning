@@ -1,0 +1,33 @@
+---
+
+###
+service_name: "TAR"
+psexec_service_user: "svc_ansible_admin"
+
+#### ARTIFACT Info
+
+nexus_url: "http://desreposrv.goldcar.es:10081"
+
+nexus_repository: "{{ nexus_url }}/repository/SAR/"
+nexus_artifact_name: "TARSID.exe"
+nexus_artifact_version: "{{ tarsid_version | default('1.07.000-9bb8453') }}"
+nexus_artifact_file: "{{ nexus_artifact_name }}-{{ nexus_artifact_version }}.7z"
+nexus_artifact_path: "{{ nexus_repository }}{{ nexus_artifact_file }}"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+project_release: "{{ tarsid_version }}"
+project_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_extract_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_final_filename: "{{ nexus_artifact_file }}"
+project_deploy_strategy: "nexus"
+project_keep_releases: "2"
+project_unwanted_items: [ '.git' ]
+
+####
+
+tar_db_host: "{{ ansible_hostname }}"
+tar_db_port: "1433"
+tar_db_user: "sa"
+tar_db_password: "testing2018"

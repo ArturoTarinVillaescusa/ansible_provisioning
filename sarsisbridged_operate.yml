@@ -1,0 +1,18 @@
+#
+# Playbook to deploy SARSISBRIDGE
+#
+# Variables:
+#
+# operation: start|stop|check|restart
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=sarsisbridgedhosts sarsisbridged_operate.yml --extra-vars "operation=restart"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/sarsisbridged_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  roles:
+    - sarsisbridged_operate

@@ -1,0 +1,48 @@
+#
+# Playbook to deploy Tasarauto
+#
+# Variables:
+#
+# tasarauto_version: Tasarauto version to install (1.4.5)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=tasarautohosts tasarauto_deploy.yml --extra-vars "tasarauto_version=1.4.8"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/tasarauto_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/tasarauto_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_templates:
+      - name: "Hibernate"
+        src: "roles/tasarauto_deploy/templates/hibernate.cfg.xml.j2"
+        dest: "hibernate.cfg.xml"
+      - name: "Application Properties"
+        src: "roles/tasarauto_deploy/templates/application.properties.j2"
+        dest: "{{ 'application-'+tasarauto_env if tasarauto_env is defined else 'application' }}.properties"
+      - name: "Application Launcher"
+        src: "roles/tasarauto_deploy/templates/Tasarauto.bat.j2"
+        dest: "Tasarauto.bat"
+      - name: "Tasarauto VERSION"
+        src: "roles/tasarauto_deploy/templates/VERSION.j2"
+        dest: "VERSION.txt"
+      - name: "Tasarauto check web executable"
+        src: "roles/tasarauto_deploy/templates/check_tasarauto.bat.j2"
+        dest: "check_tasarauto.bat"
+    project_command_copy_remote_files: []
+    project_post_deploy_commands: []
+
+  pre_tasks:
+    - name: Check ansible config for Tasarauto
+      assert:
+        that:
+        - "tasarauto_version is defined"
+
+    - include_tasks: roles/tasarauto_operate/tasks/main.yml operation=stop
+  roles:
+    - tasarauto_deploy
+  post_tasks:
+    - include_tasks: roles/tasarauto_operate/tasks/main.yml operation=start

@@ -1,0 +1,40 @@
+#Propiedades obligatorias micro servicio
+goldcar.tasks.endPoints = ,/Tasks,/Tasks/ComunicacionesPendientes,/Tasks/DatosVehiculosRecompra,/Tasks/DatosVehiculosVentas
+goldcar.tasks.nameMethods = UrlBase,Tasks,comunicacionespendientes,datosvehiculosrecompra,datosvehiculosventas
+goldcar.uris.endPoints = /Tasks
+goldcar.uris.nameMethods = Tasks
+goldcar.errors.codes =
+goldcar.errors.descriptions =
+goldcar.daemon = 1
+log4j.category.org.apache.http.wire=DEBUG
+log4j.logger.org.hibernate=OFF
+spring.jpa.show-sql=false
+
+#logging
+logging.file=Logs/Log.log
+logging.level = INFO
+logging.file.max-size=10MB
+logging.file.max-history =10
+logging.level.org.hibernate=ERROR
+springfox.documentatation.swagger.v2.path:/swagger.json
+
+# Configuraci�n HTTPS
+server.port: {{ tasarauto_port }}
+
+# Notificacion fop
+goldcar.provider.endPoint.fop={{ tasarauto_ws_endpoint_fop }}
+
+# Notificacion importe franquicia
+goldcar.provider.endPoint.franchise={{ tasarauto_ws_endpoint_franchise }}
+
+# Login
+goldcar.provider.endPoint.login={{ tasarauto_ws_endpoint_login }}
+
+# Bloqueo o desbloqueo
+goldcar.provider.endPoint.lock={{ tasarauto_ws_endpoint_lock }}
+
+# Envio de fichero de vehiculos
+goldcar.provider.endPoint.vehicleData={{ tasarauto_ws_endpoint_vehicleData }}
+
+# Usuario que consume el WS de Tasarauto
+goldcar.provider.auth.user={{ tasarauto_ws_user }}

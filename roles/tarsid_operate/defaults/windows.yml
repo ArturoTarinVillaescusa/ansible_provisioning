@@ -1,0 +1,6 @@
+---
+
+#### TARSID Config
+
+project_installation_dest: "C:\\Daemons\\TARSID"
+service_port: '9004'

@@ -1,0 +1,26 @@
+#Propiedades obligatorias micro servicio
+goldcar.tasks.endPoints = ,/Listeners,/Listeners/Instance,/Listeners/TaskEnded
+goldcar.tasks.nameMethods = UrlBase,Listeners,Instance,TaskEnded
+goldcar.uris.endPoints =  /Listeners
+goldcar.uris.nameMethods = Listeners
+goldcar.errors.codes = 571
+goldcar.errors.descriptions = La tarea ejecutada no ha sido lanzada por el scheduler,
+goldcar.daemon = {{ scheduler_goldcar_daemon_id | default(2) }}
+
+#Propiedades propias del scheduler
+goldcar.scheduler.waitingTask.timeOut = 600
+hibernate.temp.use_jdbc_metadata_defaults=false
+
+#logging
+logging.file=Logs/scheduler.log
+logging.level.com.goldcar = DEBUG
+logging.level.spring.boot = DEBUG
+logging.level.org = ERROR
+
+#spring properties
+spring.datasource.url = jdbc:sqlserver://{{ scheduler_db_ip | default('127.0.0.1') }}/{{ scheduler_db_name | default('BDSIGGERTasarauto') }}{{ scheduler_db_cluster | default('') }}
+spring.datasource.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
+spring.datasource.name={{ scheduler_db_name | default('BDSIGGERTasarauto') }}
+spring.datasource.username={{ scheduler_db_username | default('sigger') }}
+spring.datasource.password={{ scheduler_db_password | default('changeme') }}
+spring.jpa.properties.hibernate.default_schema=daemons

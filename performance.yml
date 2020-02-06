@@ -1,0 +1,11 @@
+---
+# File: performance.yml
+
+- hosts: performance
+  become: yes
+  roles:
+    - bootstrap
+    - java_performance
+    - jmeter
+    - soapui
+    - performance_sis

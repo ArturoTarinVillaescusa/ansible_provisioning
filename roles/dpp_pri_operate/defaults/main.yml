@@ -1,0 +1,19 @@
+---
+
+###
+service_name: "PRI"
+pri_service_name: "PRI"
+psexec_service_user: "svc_ansible_admin"
+service_port: 9006
+
+####
+
+project_root: "{{ project_installation_dest }}"
+project_release: "{{ pri_version }}"
+
+####
+
+pri_db_host: "{{ ansible_hostname }}"
+pri_db_port: "1433"
+pri_db_user: "sa"
+pri_db_password: "testing2018"

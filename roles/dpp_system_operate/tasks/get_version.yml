@@ -1,0 +1,6 @@
+  - name: Slurp version file
+    slurp:
+      src: "{{ project_installation_dest }}\\current\\version.txt"
+    register: slurp_version
+
+  - debug: msg="{{ slurp_version['content'] | b64decode }}"

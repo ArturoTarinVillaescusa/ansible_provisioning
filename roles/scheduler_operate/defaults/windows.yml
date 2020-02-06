@@ -1,0 +1,7 @@
+---
+
+#### Scheduler Config
+
+service_name: "Scheduler"
+psexec_service_user: "svc_ansible_admin"
+project_installation_dest: "C:\\Microservicios\\Scheduler"

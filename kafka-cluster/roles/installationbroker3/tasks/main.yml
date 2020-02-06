@@ -1,0 +1,29 @@
+---
+# This Playbook runs the specific plays in broker3
+
+- replace:
+    dest: "{{ kafka_app_dir }}/config/server.properties"
+    regexp: 'broker.id=0'
+    replace: 'broker.id=3'
+    backup: yes
+
+- lineinfile:
+    dest: "{{ zookeeper_app_dir }}/conf/zoo.cfg"
+    line: "server.1=broker1:2888:3888"
+    insertafter: EOF
+
+- lineinfile:
+    dest: "{{ zookeeper_app_dir }}/conf/zoo.cfg"
+    line: "server.2=broker2:2888:3888"
+    insertafter: EOF
+
+- lineinfile:
+    dest: "{{ zookeeper_app_dir }}/conf/zoo.cfg"
+    line: "server.3=0.0.0.0:2888:3888"
+    insertafter: EOF
+
+- name: Create the {{ zookeeper_data_dir }}/myid file
+  copy:
+    dest: "{{ zookeeper_data_dir }}/myid"
+    content: |
+      3

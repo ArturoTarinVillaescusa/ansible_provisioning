@@ -1,0 +1,45 @@
+#
+# Playbook to deploy Scheduler
+#
+# Variables:
+#
+# tasarauto_version: Scheduler version to install (1.0)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=schedulerhosts scheduler_deploy.yml --extra-vars "scheduler_version=1.0"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/scheduler_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/scheduler_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_templates:
+      - name: "Application Properties"
+        src: "roles/scheduler_deploy/templates/application.properties.j2"
+        dest: "{{ 'application-'+scheduler_env if scheduler_env is defined else 'application' }}.properties"
+      - name: "Application Launcher"
+        src: "roles/scheduler_deploy/templates/iniciarscheduler.bat.j2"
+        dest: "iniciarscheduler.bat"
+      - name: "Scheduler VERSION"
+        src: "roles/scheduler_deploy/templates/VERSION.j2"
+        dest: "VERSION.txt"
+      - name: "Scheduler check web executable"
+        src: "roles/scheduler_deploy/templates/check_scheduler.bat.j2"
+        dest: "check_scheduler.bat"
+    project_command_copy_remote_files: []
+    project_post_deploy_commands: []
+
+  pre_tasks:
+    - name: Check ansible config for Scheduler
+      assert:
+        that:
+        - "scheduler_version is defined"
+
+    - include_tasks: roles/scheduler_operate/tasks/main.yml operation=stop
+  roles:
+    - scheduler_deploy
+  post_tasks:
+    - include_tasks: roles/scheduler_operate/tasks/main.yml operation=start

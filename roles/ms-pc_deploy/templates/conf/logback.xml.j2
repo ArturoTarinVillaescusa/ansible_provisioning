@@ -1,0 +1,52 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-55(%d{HH:mm:ss.SSS} %-5(%level) %logger{32}) - %message%n%xException</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>c:/PricingSystem/logs/pricing_system_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%-30(%date %-5(%level])) %logger{32} - %msg%n%xException</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
+    <appender name="FILE_ASYNC500" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>500</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FILE" />
+    </appender>
+
+    <appender name="CONSOLE_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="STDOUT" />
+    </appender>
+
+
+    <logger name="model" level="{{ pricing_logback_verbosity | default('DEBUG') }}" />
+    <logger name="akka" level="{{ pricing_logback_verbosity | default('DEBUG') }}" />
+    <logger name="actors"  level="{{ pricing_logback_verbosity | default('DEBUG') }}" />
+
+
+    <logger name="slick.jdbc" level="INFO" />
+    <logger name="slick.jdbc.JdbcBackend.benchmark" level="INFO" />
+    <logger name="slick" level="INFO" />
+
+
+    <logger name="com.zaxxer.hikari" level="INFO" />
+    <logger name="org.flywaydb" level="INFO" />
+
+    <root level="ERROR">
+        <!--Comentar para producción-->
+        <appender-ref ref="CONSOLE_ASYNC" />
+        <!--Descomentar para producción-->
+        <appender-ref ref="FILE_ASYNC500" />
+    </root>
+</configuration>

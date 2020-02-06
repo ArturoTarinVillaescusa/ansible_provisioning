@@ -1,0 +1,8 @@
+---
+
+- name: Create Repository
+  include_tasks: create_repository.yml
+
+- name: Create Build Jobs
+  include_tasks: create_build_jobs.yml
+

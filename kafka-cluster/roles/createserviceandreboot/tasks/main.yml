@@ -1,0 +1,17 @@
+---
+# This Playbook enables automatic starting on Zookeeper and Kafka services
+
+- name: Enable automatically starting the Zookeeper service
+  command: systemctl enable zoo
+
+- name: Enable automatically starting the Kafka service
+  command: systemctl enable kafka
+
+- name: Enable automatically starting the Monit service
+  command: systemctl enable monit
+
+- name: Reboot broker
+  shell: 'sleep 1 && shutdown -r now "Reboot triggered by Ansible" && sleep 1'
+  async: 1
+  poll: 0
+  become: true

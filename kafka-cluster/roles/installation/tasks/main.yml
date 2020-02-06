@@ -1,0 +1,112 @@
+---
+# This Playbook runs all the installation and configuration tasks in all the brokers
+- name: Update operating system packages list
+  apt:
+    update_cache: yes
+
+- name: Install operating system packages
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    state: latest
+  with_items:
+    - openjdk-8-jre-headless
+    - monit
+
+- name: If exists, remove the {{ zookeeper_app_dir }} folder
+  file:
+    path: "{{ zookeeper_app_dir }}"
+    state: absent
+
+# Use the already downloaded Zookeeper targz file.
+# We may want to use it if we don't have internet connection
+- name: Extract the Zookeeper compressed file to the /opt folder
+  unarchive:
+    src: "{{ zookeeper_targz_file }}"
+    dest: /opt
+    owner: root
+    group: root
+    mode: u=rwX,g=rX,o=rX
+
+# Uncomment this and comment the previous if you want to download it from Internet
+#- name: Download and extract Zookeeper to the /opt folder
+#  unarchive:
+#    src: "{{ zookeeper_targz_url }}"
+#    dest: /opt
+#    remote_src: yes
+#    copy: no
+#    owner: root
+#    group: root
+#    mode: u=rwX,g=rX,o=rX
+
+- name: Rename {{ zookeeper_withversion_app_dir }} folder to {{ zookeeper_app_dir }}
+  command: mv {{ zookeeper_withversion_app_dir }} {{ zookeeper_app_dir }}
+
+- name: If exists, remove the {{ kafka_app_dir }} folder
+  file:
+    path: "{{ kafka_app_dir }}"
+    state: absent
+
+
+# Use the already downloaded Kafka targz file.
+# We may want to use it if we don't have internet connection
+- name: Extract the Kafka compressed file to the /opt folder
+  unarchive:
+    src: "{{ kafka_targz_file }}"
+    dest: /opt
+    owner: root
+    group: root
+    mode: u=rwX,g=rX,o=rX
+
+# Uncomment this and comment the previous if you want to download it from Internet
+#- name: Download and extract Kafka to the /opt folder
+#  unarchive:
+#    src: "{{ kafka_targz_url }}"
+#    dest: /opt
+#    remote_src: yes
+#    copy: no
+#    owner: root
+#    group: root
+#    mode: u=rwX,g=rX,o=rX
+
+- name: Rename {{ kafka_withversion_app_dir }} folder to {{ kafka_app_dir }}
+  command: mv {{ kafka_withversion_app_dir }} {{ kafka_app_dir }}
+
+- name: Create the hosts file for all machines
+  template: src=hosts.j2 dest=/etc/hosts
+
+- name: Create the Zookeeper {{ zookeeper_app_dir }}/conf/zoo.cfg configuration file
+  command: cp {{ zookeeper_app_dir }}/conf/zoo_sample.cfg {{ zookeeper_app_dir }}/conf/zoo.cfg
+
+- replace:
+    dest: "{{ zookeeper_app_dir }}/conf/zoo.cfg"
+    regexp: 'dataDir=/tmp/zookeeper'
+    replace: 'dataDir=/opt/data/zookeeper'
+    backup: no
+
+- replace:
+    dest: "{{ kafka_app_dir }}/config/server.properties"
+    regexp: 'localhost:2181'
+    replace: 'broker1:2181,broker2:2181,broker3:2181'
+    backup: no
+
+- name: Create the {{ zookeeper_data_dir }} folder
+  file:
+    path: "{{ zookeeper_data_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0775
+
+- name: Create the /etc/systemd/system/zoo.service
+  template: src=zookeeperservice.j2 dest=/etc/systemd/system/zoo.service
+
+- name: Create the /etc/systemd/system/kafka.service file
+  template: src=kafkaservice.j2 dest=/etc/systemd/system/kafka.service
+
+- name: Create the /etc/monit/conf-available/kafka file to monitor the Zookeeper process (https://mmonit.com/)
+  template: src=monitorzookeeperservice.j2 dest=/etc/monit/conf-available/zoo
+
+- name: Create the /etc/monit/conf-available/kafka file to monitor the Kafka process (https://mmonit.com/)
+  template: src=monitorkafkaservice.j2 dest=/etc/monit/conf-available/kafka
+

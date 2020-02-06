@@ -1,0 +1,32 @@
+---
+###
+service_name: "SARSISBRIDGE"
+service_port: "9001"
+service_secure_port: "9444"
+psexec_service_user: "svc_ansible_admin"
+
+#### ARTIFACT Info
+
+nexus_url: "http://desreposrv.rentalcar.es:10081"
+
+nexus_repository: "{{ nexus_url }}/repository/SAR/"
+nexus_artifact_name: "SARSISBRIDGEDWebServer.exe"
+nexus_artifact_version: "{{ sarsisbridged_version | default('1.02.000-683a7a0') }}"
+nexus_artifact_file: "{{ nexus_artifact_name }}-{{ nexus_artifact_version }}.7z"
+nexus_artifact_path: "{{ nexus_repository }}{{ nexus_artifact_file }}"
+
+####
+
+openssl_pass: "changeme"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+project_release: "{{ sarsisbridged_version }}"
+project_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_extract_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_final_filename: "{{ nexus_artifact_file }}"
+project_deploy_strategy: "nexus"
+project_keep_releases: "2"
+project_unwanted_items: [ '.git' ]
+project_deploy_hook_on_create_build_dir: 'roles/sarsisbridged_deploy/tasks/on_create_build.yml'

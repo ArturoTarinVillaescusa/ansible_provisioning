@@ -1,0 +1,289 @@
+---
+# 1. Installing Kerberos server, admin and client
+- name: "Installing Kerberos server, admin and client in {{ kerberos.kdc_hostname }}"
+  apt:
+    name:
+      - krb5-kdc
+      - krb5-locales
+      - krb5-admin-server
+    update_cache: yes
+    state: latest
+  tags: krb auth
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: "Create the /etc/krb5.conf in {{ kerberos.kdc_hostname }}"
+  template:
+    src: krb5.conf.j2
+    dest: "/etc/krb5.conf"
+
+- name: "Create the /var/log/kerberos folder in {{ kerberos.kdc_hostname }}"
+  file:
+    path: /var/log/kerberos
+    state: directory
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: "Create the /etc/kdc folder in {{ kerberos.kdc_hostname }}"
+  file:
+    path: /etc/kdc
+    state: directory
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: "Create the /var/kerberos/krb5kdc/ in {{ kerberos.kdc_hostname }}"
+  file:
+    path: /var/kerberos/krb5kdc/
+    state: directory
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: "Create a link: ln -s /etc/krb5.conf /etc/kdc/krb5.conf in {{ kerberos.kdc_hostname }}"
+  file:
+    src: "/etc/krb5.conf"
+    dest: "/etc/kdc/krb5.conf"
+    state: link
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Inserting your hosts information in /etc/hosts file
+  lineinfile:
+    dest: "/etc/hosts"
+    line: "{{ hostvars[item].ansible_default_ipv4.address }} {{ item }} {{ item[0:7] }}"
+    insertafter: EOF
+  with_items: "{{groups['all']}}"
+
+
+# - name: Set some kernel parameters
+#   lineinfile:
+#     dest: /etc/hosts
+#     line: "{{ item.line }}"
+#   with_items:
+#     - { line: '192.168.0.116   broker1 broker1.rentalcar.es' }
+#     - { line: '192.168.0.117   broker2 broker2.rentalcar.es' }
+#     - { line: '192.168.0.118   broker3 broker3.rentalcar.es' }
+
+- name: "Create Kerberos database witn the command 'kdb5_util -P \
+      ********** -r {{ kerberos.realm }} create -s' \
+      (It will take 3 minutes approximately ...)"
+  shell: kdb5_util -P {{ kerberos.krb_master_password }} -r {{ kerberos.realm }} create -s
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+  ignore_errors: yes
+
+- name: Create the required credentials
+  shell: kadmin.local -w password -q "addprinc -randkey {{ item }}@{{ kerberos.realm }}" > /dev/null
+  with_items:
+    - kafka/zookeeper
+    - kafka_producer/producer
+    - kafka_consumer/consumer
+    - reader
+    - writer
+    - adminuser
+    - kafka/admin
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Create each Zookeeper server key with FQDN
+  shell: kadmin.local -w password -q "addprinc -randkey zookeeper/{{ item }}@{{ kerberos.realm }}" > /dev/null
+  with_items: "{{groups['all']}}"
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Create each Kafka server key
+  shell: kadmin.local -w password -q "addprinc -randkey kafka/{{ item }}@{{ kerberos.realm }}" >> /dev/null
+  with_items: "{{groups['all']}}"
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Creates the {{ kerberos.keytab_source_dir }} directory
+  file:
+    path: "{{ kerberos.keytab_source_dir }}"
+    state: directory
+
+- name: "Crop {{  kerberos.kdc_hostname }} without number into a variable called 'inventory_hostname_without_number'"
+  set_fact:
+    inventory_hostname_without_number: "{{ inventory_hostname | regex_replace('^(.*?)[0-9]$', '\\1') }}"
+
+- name: "Create the {{ kerberos.keytab_source_dir }}/reader.user.keytab file to be used by the Kafka consumer users. \
+         Command: kadmin.local -w password -q 'ktadd -k {{ kerberos.keytab_source_dir }}/reader.user.keytab -glob reader*'"
+  shell: kadmin.local -w password -q "ktadd -k {{ kerberos.keytab_source_dir }}/reader.user.keytab -glob reader*" >> /tmp/SALIDA.TXT
+  ignore_errors: yes
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: "Create the {{ kerberos.keytab_source_dir }}/writer.user.keytab file to be used by the Kafka producer users. \
+         Command: kadmin.local -w password -q 'ktadd -k {{ kerberos.keytab_source_dir }}/writer.user.keytab -glob reader*'"
+  shell: kadmin.local -w password -q "ktadd -k {{ kerberos.keytab_source_dir }}/writer.user.keytab -glob writer*" >> /tmp/SALIDA.TXT
+  ignore_errors: yes
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: "Create the {{ kerberos.keytab_source_dir }}/adminuser.user.keytab file to be used by the Kafka administrator users. \
+         Command: kadmin.local -w password -q 'ktadd -k {{ kerberos.keytab_source_dir }}/adminuser.user.keytab -glob adminuser*'"
+  shell: kadmin.local -w password -q "ktadd -k {{ kerberos.keytab_source_dir }}/adminuser.user.keytab -glob *admin*" >> /tmp/SALIDA.TXT
+  ignore_errors: yes
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- debug: msg="Store the reader.user.keytab file into the local machine where the Ansible script is being launched"
+- fetch:
+    src: "{{ kerberos.keytab_source_dir }}/reader.user.keytab"
+    dest: ../files/certs
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- debug: msg="Store the writer.user.keytab file into the local machine where the Ansible script is being launched"
+- fetch:
+    src: "{{ kerberos.keytab_source_dir }}/writer.user.keytab"
+    dest: ../files/certs
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- debug: msg="Store the adminuser.user.keytab file into the local machine where the Ansible script is being launched"
+- fetch:
+    src: "{{ kerberos.keytab_source_dir }}/adminuser.user.keytab"
+    dest: ../files/certs
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: "Copy ../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/reader.user.keytab to {{ kerberos.keytab_source_dir }}/reader.user.keytab"
+  copy:
+    src: "../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/reader.user.keytab"
+    dest: "{{ kerberos.keytab_source_dir }}/reader.user.keytab"
+    mode: 0744
+
+- name: "Copy ../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/writer.user.keytab to {{ kerberos.keytab_source_dir }}/writer.user.keytab"
+  copy:
+    src: "../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/writer.user.keytab"
+    dest: "{{ kerberos.keytab_source_dir }}/writer.user.keytab"
+    mode: 0744
+
+- name: "Copy ../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/adminuser.user.keytab to {{ kerberos.keytab_source_dir }}/adminuser.user.keytab"
+  copy:
+    src: "../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/adminuser.user.keytab"
+    dest: "{{ kerberos.keytab_source_dir }}/adminuser.user.keytab"
+    mode: 0744
+
+- name: "Create the {{ kerberos.keytab_source_dir }}/zookeeper.service.keytab file to be used by Zookeeper. \
+         Command: \
+         kadmin.local -w password -q 'ktadd -norandkey -k {{ kerberos.keytab_source_dir }}/zookeeper.service.keytab -glob zookeeper*'"
+  shell: kadmin.local -w password -q "ktadd -k {{ kerberos.keytab_source_dir }}/zookeeper.service.keytab -glob zookeeper*" >> /tmp/SALIDA.TXT
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: "Create the {{ kerberos.keytab_source_dir }}/kafka.service.keytab file to be used by Kafka. \
+         Command: kadmin.local -w password -q 'ktadd -k {{ kerberos.keytab_source_dir }}/kafka.service.keytab -glob kafka*'"
+  shell: kadmin.local -w password -q "ktadd -k {{ kerberos.keytab_source_dir }}/kafka.service.keytab -glob kafka*" >> /tmp/SALIDA.TXT
+  ignore_errors: yes
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- debug: msg="Store the zookeeper.service.keytab file into the local machine where the Ansible script is being launched"
+- fetch:
+    src: "{{ kerberos.keytab_source_dir }}/zookeeper.service.keytab"
+    dest: ../files/certs
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- debug: msg="Store the kafka.service.keytab file into the local machine where the Ansible script is being launched"
+- fetch:
+    src: "{{ kerberos.keytab_source_dir }}/kafka.service.keytab"
+    dest: ../files/certs
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Copy ../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/zookeeper.service.keytab to {{ kerberos.keytab_source_dir }}/zookeeper.service.keytab
+  copy:
+    src: "../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/zookeeper.service.keytab"
+    dest: "{{ kerberos.keytab_source_dir }}/zookeeper.service.keytab"
+    mode: 0744
+
+- name: Copy ../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/kafka.service.keytab to {{ kerberos.keytab_source_dir }}/kafka.service.keytab
+  copy:
+    src: "../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.keytab_source_dir }}/kafka.service.keytab"
+    dest: "{{ kerberos.keytab_source_dir }}/kafka.service.keytab"
+    mode: 0744
+
+- name: "Start Kerberos database witn the command '/usr/sbin/krb5kdc -n &'"
+  shell: /usr/sbin/krb5kdc -n &
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Create the /etc/systemd/system/krb5kdc.service
+  copy:
+    src: files/krb5kdc.service
+    dest: /etc/systemd/system/krb5kdc.service
+
+# 2. TLS (SSL) Kafka broker setup:
+# Configure a Keystore and a truststore for our Kafka brokers and clients
+- name: Create the ~/.ssl folder
+  file:
+    path: "~/.ssl"
+    state: directory
+    mode: 0775
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Install openjdk-8-jre-headless
+  apt:
+    name:
+      - openjdk-8-jre-headless
+    update_cache: yes
+    state: latest
+
+- name: Create the {{ kerberos.jks_store_folder }} folder
+  file:
+    path: "{{ kerberos.jks_store_folder }}"
+    state: directory
+    mode: 0775
+
+- name: Create the ~/.ssl/kafka-generate-ssl.sh file
+  template:
+    src: kafka-generate-ssl.sh.j2
+    dest: "~/.ssl/kafka-generate-ssl.sh"
+    mode: 0775
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Execute the ~/.ssl/kafka-generate-ssl.sh file
+  shell: ~/.ssl/kafka-generate-ssl.sh > ~/.ssl/kafka-generate-ssl.log
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Create the {{ kerberos.jks_store_folder }}/client-ssl.properties file
+  template:
+    src: client-ssl.properties.j2
+    dest: "{{ kerberos.jks_store_folder }}/client-ssl.properties"
+    mode: 0775
+
+- name: Create the {{ kerberos.jks_store_folder }}/client-authentication-ssl.properties file
+  template:
+    src: client-ssl.properties.j2
+    dest: "{{ kerberos.jks_store_folder }}/client-authentication-ssl.properties"
+    mode: 0775
+
+- debug: msg="Store the {{ kerberos.jks_store_folder }}/kafka.server.truststore.jks file into the local machine where the Ansible script is being launched"
+- fetch:
+    src: "{{ kerberos.jks_store_folder }}/kafka.server.truststore.jks"
+    dest: ../files/certs
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- debug: msg="Store the {{ kerberos.jks_store_folder }}/kafka.server.keystore.jks file into the local machine where the Ansible script is being launched"
+- fetch:
+    src: "{{ kerberos.jks_store_folder }}/kafka.server.keystore.jks"
+    dest: ../files/certs
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- debug: msg="Store the {{ kerberos.jks_store_folder }}/kafka.client.truststore.jks file into the local machine where the Ansible script is being launched"
+- fetch:
+    src: "{{ kerberos.jks_store_folder }}/kafka.client.truststore.jks"
+    dest: ../files/certs
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- debug: msg="Store the {{ kerberos.jks_store_folder }}/kafka.client.keystore.jks file into the local machine where the Ansible script is being launched"
+- fetch:
+    src: "{{ kerberos.jks_store_folder }}/kafka.client.keystore.jks"
+    dest: ../files/certs
+  when: "inventory_hostname == kerberos.kdc_hostname|string"
+
+- name: Copy ../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.jks_store_folder }}/kafka.server.truststore.jks to {{ kerberos.jks_store_folder }}/kafka.server.truststore.jks
+  copy:
+    src: "../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.jks_store_folder }}/kafka.server.truststore.jks"
+    dest: "{{ kerberos.jks_store_folder }}/kafka.server.truststore.jks"
+    mode: 0744
+
+- name: Copy ../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.jks_store_folder }}/kafka.server.keystore.jks to {{ kerberos.jks_store_folder }}/kafka.server.keystore.jks
+  copy:
+    src: "../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.jks_store_folder }}/kafka.server.keystore.jks"
+    dest: "{{ kerberos.jks_store_folder }}/kafka.server.keystore.jks"
+    mode: 0744
+
+- name: Copy ../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.jks_store_folder }}/kafka.client.truststore.jks to {{ kerberos.jks_store_folder }}/kafka.client.truststore.jks
+  copy:
+    src: "../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.jks_store_folder }}/kafka.client.truststore.jks"
+    dest: "{{ kerberos.jks_store_folder }}/kafka.client.truststore.jks"
+    mode: 0744
+
+- name: Copy ../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.jks_store_folder }}/kafka.client.keystore.jks to {{ kerberos.jks_store_folder }}/kafka.client.keystore.jks
+  copy:
+    src: "../files/certs/{{ kerberos.kdc_hostname }}{{ kerberos.jks_store_folder }}/kafka.client.keystore.jks"
+    dest: "{{ kerberos.jks_store_folder }}/kafka.client.keystore.jks"
+    mode: 0744

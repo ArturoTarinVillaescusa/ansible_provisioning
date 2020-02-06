@@ -1,0 +1,27 @@
+<GetAllGroupsReservationAvailabilityAndRatesByLocationRQ xmlns="http://sarsis.rentalcar.es/SARSISD/Esquemas" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://sarsis.rentalcar.es/SARSISD/Esquemas http://sarsis.rentalcar.es/SARSISD/Esquemas/GOLDCAR_GetAllGroupsReservationAvailabilityAndRatesByLocation.xsd">
+  <Authentication>
+    <Code>50000-00</Code>
+    <Password>0000</Password>
+    <Encrypted>false</Encrypted>  
+  </Authentication>
+  <ReservationData>
+    <PickUp>
+      <Place>MAD</Place>
+      <Date>{{ lookup('pipe','date -d "+5 days" +%Y-%m-%d') }}</Date>
+      <Time>10:00</Time>
+    </PickUp>
+    <DropOff>
+      <Place>MAD</Place>
+      <Date>{{ lookup('pipe','date -d "+10 days" +%Y-%m-%d') }}</Date>
+      <Time>10:00</Time>
+    </DropOff>
+    <FuelPolicy>FlexFuelSDR</FuelPolicy>
+  </ReservationData>
+  <ExtrasPackages>
+    <ExtraInfo>
+      <ExtraAlias>PremiumFeeOffice</ExtraAlias>
+      <Amount>1</Amount>
+    </ExtraInfo>
+    <PackageReference>15091</PackageReference>
+  </ExtrasPackages>
+</GetAllGroupsReservationAvailabilityAndRatesByLocationRQ>

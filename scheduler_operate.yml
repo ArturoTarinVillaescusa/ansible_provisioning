@@ -1,0 +1,18 @@
+#
+# Playbook to operate Scheduler
+#
+# Variables:
+#
+# operation: start|stop|restart
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=schedulerhosts scheduler_operate.yml --extra-vars "operation=restart"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/scheduler_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  roles:
+    - scheduler_operate

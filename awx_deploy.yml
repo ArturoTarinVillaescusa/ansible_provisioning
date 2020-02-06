@@ -1,0 +1,35 @@
+#
+# Playbook to deploy AWX platform
+#
+# Requirements:
+#
+#    python3-pip
+#
+# Variables:
+#
+#    awx_secret_key: awxsecret           # Master key to encrypt/decrypt secrets
+#    pg_username: awx                    # Postgres username password
+#    pg_password: awxpass                # Postgres database password
+#    rabbitmq_username: guest            # RabbitMQ username
+#    rabbitmq_password: guest            # RabbitMQ password
+#    default_admin_user: admin           # AWX Web Portal username
+#    default_admin_password: password    # AWX Web Portal password
+#    ssl_certs_cert_data                 # SSL cert file
+#    ssl_certs_privkey_data              # SSL key file
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i awxinventory.yml --limit=awx awx_deploy.yml
+#
+# To force restart AWX environment:
+#
+# ansible-playbook -i awxinventory.yml --limit=awx awx_deploy.yml --extra-vars="recreate=always"
+#
+
+---
+- name: Deploy AWX
+  hosts: all
+  gather_facts: true
+  roles:
+    - { role: awx_deploy }

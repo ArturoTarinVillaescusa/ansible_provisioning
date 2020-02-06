@@ -1,0 +1,21 @@
+---
+
+- name: "Check to see if JAVA is downloaded"
+  win_stat: path='C:\\Program Files\\Java\\{{ java_path }}\\bin\\java.exe'
+  register: java_downloaded
+
+- name: "Download JAVA installable"
+  win_copy:
+    src: "{{ java_version }}-windows-x64.exe"
+    dest: "{{ temp_path }}{{ path_separator }}{{ java_version }}-windows-x64.exe"
+  when: not java_downloaded.stat.exists
+
+- name: "Install JAVA"
+  win_package:
+    path: '{{ temp_path }}{{ path_separator }}{{ java_version }}-windows-x64.exe'
+    creates_path: "C:\\Program Files\\Java\\{{ java_path }}\\bin\\java.exe"
+    arguments: "INSTALL_SILENT=Enable"
+    state: present
+  args:
+    chdir: "{{ temp_path }}{{ path_separator }}"
+  when: not java_downloaded.stat.exists

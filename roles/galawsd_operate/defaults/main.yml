@@ -1,0 +1,10 @@
+---
+
+###
+service_name: "GalaWSD"
+psexec_service_user: "svc_ansible_admin"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+project_release: "{{ galawsd_version }}"

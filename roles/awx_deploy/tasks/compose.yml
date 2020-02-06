@@ -1,0 +1,65 @@
+---
+- name: Create {{ docker_compose_dir }} directory
+  file:
+    path: "{{ docker_compose_dir }}/nginx/ssl"
+    state: directory
+    owner: ansible
+    group: ansible
+  become: true
+
+- name: "Dynamically Generate NGINX Main Configuration File"
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ docker_compose_dir }}/nginx/{{ item }}"
+    owner: ansible
+    group: ansible
+  with_items:
+    - "nginx.conf"
+    - "ssl/cert.crt"
+    - "ssl/cert.key"
+
+- name: "Copy AWX Configuration File"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ docker_compose_dir }}/{{ item }}"
+    owner: ansible
+    group: ansible
+    mode: 0755
+  with_items:
+    - "requirements.txt"
+    - "launch_awx_task.sh"
+
+- name: "Copy Postgress Configuration File"
+  template:
+    src: "{{ item.name }}.j2"
+    dest: "{{ docker_compose_dir }}/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  with_items:
+    - { name: ".pgpass", mode: "0600" }
+    - { name: "backup_postgres.sh", mode: "0700" }
+    - { name: "krb5.conf", mode: "0600" }
+  become: true
+
+- name: Create docker-compose.yml file
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ docker_compose_dir }}/{{ item }}"
+    owner: ansible
+    group: ansible
+  with_items:
+    - docker-compose.yml
+    - docker-compose-db-back.yml
+
+- name: Create awx_net network
+  docker_network:
+    name: awx_net
+  become: true
+
+- name: Start the containers
+  docker_service:
+    project_src: "{{ docker_compose_dir }}"
+    recreate: "{{ recreate | default('smart') }}"
+  become: true
+

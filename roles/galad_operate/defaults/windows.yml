@@ -1,0 +1,7 @@
+---
+
+#### GalaD Config
+
+service_name: "GalaD"
+psexec_service_user: "svc_ansible_admin"
+project_installation_dest: "C:\\Microservicios\\GalaD"

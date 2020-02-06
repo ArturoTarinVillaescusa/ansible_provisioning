@@ -1,0 +1,11 @@
+---
+
+###
+service_name: "SARSISD"
+psexec_service_user: "svc_ansible_admin"
+service_port: "9002"
+service_secure_port: "9443"
+
+####
+
+project_root: "{{ project_installation_dest }}"

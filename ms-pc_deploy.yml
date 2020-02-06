@@ -1,0 +1,50 @@
+#
+# Playbook to deploy Precios competencia Microservice (MS-PC)
+#
+# Variables:
+#
+# ms_pc_version: Precios competencia Microservice version to install (1.4)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=mspchosts ms-pc_deploy.yml --extra-vars "ms_pc_version=1.4"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/ms-pc_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/ms-pc_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_unwanted_items: [ '.git', 'bin', 'conf' ]
+    project_files: []
+    project_templates:
+      - name: "MS-PC VERSION"
+        src: "roles/ms-pc_deploy/templates/conf/VERSION.j2"
+        dest: "VERSION.txt"
+      - name: "Logback"
+        src: "roles/ms-pc_deploy/templates/conf/logback.xml.j2"
+        dest: "logback.xml"
+      - name: "Application conf"
+        src: "roles/ms-pc_deploy/templates/conf/application.conf.j2"
+        dest: "application.conf"
+      - name: "run_pc executable"
+        src: "roles/ms-pc_deploy/templates/run_pc.bat.j2"
+        dest: "run_pc.bat"
+      - name: "check web executable"
+        src: "roles/ms-pc_deploy/templates/check_pc.bat.j2"
+        dest: "check_pc.bat"
+    project_command_copy_remote_files: []
+    project_pre_deploy_commands: []
+    project_post_deploy_commands: []
+  pre_tasks:
+    - name: Check ansible config for MS-PC
+      assert:
+        that:
+        - "ms_pc_version is defined"
+
+    - include_tasks: roles/ms-pc_operate/tasks/main.yml operation=stop
+  roles:
+    - ms-pc_deploy
+  post_tasks:
+    - include_tasks: roles/ms-pc_operate/tasks/main.yml operation=start

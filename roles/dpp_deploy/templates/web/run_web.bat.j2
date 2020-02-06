@@ -1,0 +1,19 @@
+mode COLS=132 LINES=50
+color 60
+
+REM ESTA PARTE INCLUYE LA VERSION EN EL TITULO
+REM --------------------------------------------------------------------
+setlocal enabledelayedexpansion
+set SEPARATOR=/
+set filecontent=
+for /f "delims=" %%a in ({{ project_root }}\current\web\version.txt) do (
+  set currentline=%%a
+  set filecontent=!filecontent!!currentline!
+)
+title WEB %filecontent%
+REM --------------------------------------------------------------------
+set "RUN_HOME=%~dp0"
+set RUN_HOME=%RUN_HOME:~0,-1%
+
+bin\web -Dconfig.file="%RUN_HOME%/web.conf" -Dlogger.file="%RUN_HOME%/logback.xml" -Dhttp.port=disabled -Dhttps.port=443 -Dplay.server.https.keyStore.path="{{ project_root }}\current\certificados\pricing_web.keystore" -Dplay.server.https.keyStore.password="%PRICING_WEB_KEYSTORE_PWD%" -Djavax.net.ssl.trustStore="{{ project_root }}\current\certificados\pricing_web.cacerts"
+pause

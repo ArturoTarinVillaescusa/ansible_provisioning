@@ -1,0 +1,28 @@
+<GetAllGroupsReservationAvailabilityAndRatesByLocationRQ xmlns="http://sarsis.goldcar.es/SARSISD/Esquemas" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://sarsis.goldcar.es/SARSISD/Esquemas http://sarsis.goldcar.es/SARSISD/Esquemas/GOLDCAR_GetAllGroupsReservationAvailabilityAndRatesByLocation.xsd">
+  <Authentication>
+    <Code>50000-00</Code>
+    <Password>0000</Password>
+    <Encrypted>false</Encrypted>  
+  </Authentication>
+  <ReservationData>
+    <PickUp>
+      <Place>ALC</Place>
+      <Date>2018-06-14</Date>
+      <Time>10:00</Time>
+    </PickUp>
+    <DropOff>
+      <Place>ALC</Place>
+      <Date>2018-06-15</Date>
+      <Time>10:00</Time>
+    </DropOff>
+    <FuelPolicy>FullFuelSDC</FuelPolicy>
+    <FuelPolicy>FlexFuelSDR</FuelPolicy>
+  </ReservationData>
+  <ExtrasPackages>
+    <ExtraInfo>
+      <ExtraAlias>PremiumFeeOffice</ExtraAlias>
+      <Amount>1</Amount>
+    </ExtraInfo>
+    <PackageReference>15091</PackageReference>
+  </ExtrasPackages>
+</GetAllGroupsReservationAvailabilityAndRatesByLocationRQ>

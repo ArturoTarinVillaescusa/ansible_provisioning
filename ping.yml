@@ -1,0 +1,10 @@
+- hosts: all
+  gather_facts: true
+  tasks:
+    - name: "Ping Windows System"
+      win_ping:
+      when: ansible_os_family | lower == "windows"
+
+    - name: "Ping Debian System"
+      ping:
+      when: ansible_os_family | lower == "debian"

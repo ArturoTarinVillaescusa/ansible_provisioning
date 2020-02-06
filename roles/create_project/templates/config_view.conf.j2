@@ -1,0 +1,23 @@
+<hudson.model.ListView>
+    <name>{{ build_name }}</name>
+    <filterExecutors>false</filterExecutors>
+    <filterQueue>false</filterQueue>
+    <properties class="hudson.model.View$PropertyList"/>
+    <jobNames>
+        <comparator class="hudson.util.CaseInsensitiveComparator"/>
+    </jobNames>
+    <jobFilters/>
+    <columns>
+        <hudson.views.StatusColumn/>
+        <hudson.views.WeatherColumn/>
+        <hudson.views.JobColumn/>
+        <hudson.views.LastSuccessColumn/>
+        <hudson.views.LastFailureColumn/>
+        <hudson.views.LastDurationColumn/>
+        <hudson.views.BuildButtonColumn/>
+        <org.jenkins.plugins.builton.BuiltOnColumn plugin="built-on-column@1.1"/>
+        <hudson.plugins.lastfailureversioncolumn.LastFailureVersionColumn plugin="lastfailureversioncolumn@1.1"/>
+    </columns>
+    <includeRegex>(^{{ build_name }}.*).*</includeRegex>
+    <recurse>false</recurse>
+</hudson.model.ListView>

@@ -1,0 +1,107 @@
+##############################
+#  CONFIGURACIÓN DEL MÓDULO  #
+##############################
+
+com.rentalcar {
+	pri {
+	    #Hostname/IP y puerto del nodo akka
+		akka.hostname = "{{ pricing_pri_akka_hostname | default('127.0.0.1') }}"
+		akka.port = {{ pricing_pri_akka_port | default('2553') }}
+
+		# Hostname/IP y puerto del socket para solicitar precios
+		socket.hostname = "{{ pricing_pri_socket_hostname | default('127.0.0.1') }}"
+		socket.port = {{ pricing_pri_socket_port | default('9006') }}
+	}
+
+	#Localización del módulo system. Estas claves han de ser idéntica a las claves de com.rentalcar.system del archivo de configuración del módulo system (system.conf)
+	system {
+		akka.hostname = "{{ pricing_system_akka_hostname | default('127.0.0.1') }}"
+		akka.port = {{ pricing_system_akka_port | default('2555') }}
+	}
+}
+
+
+
+
+
+#############################################################################
+#                        A  T  E  N  C  I  Ó  N                             #
+# A partir de aquí mejor no tocar si no se sabe lo que se está haciendo ;-) #
+#############################################################################
+# Configuración común del cluster (proviene de core)
+include "cluster.conf"
+# Configuración común de las opciones de serialización (proviene de core)
+include "serialization.conf"
+# Configuración común del BBDD (proviene de core)
+include "db.conf"
+
+akka {
+  loglevel = "DEBUG"
+
+  remote {
+    netty.tcp {
+      hostname = ${com.rentalcar.pri.akka.hostname}
+      port = ${com.rentalcar.pri.akka.port}
+      port = ${?RPORT}
+      maximum-frame-size = 3048 kB
+    }
+  }
+
+	// Hace que el ActorLogging sea mucho más simple
+	loggers = ["akka.event.slf4j.Slf4jLogger"]
+
+  cluster {
+    roles = ["pri"]
+	  seed-nodes = [
+		  "akka.tcp://"${akka.cluster.name}"@"${com.rentalcar.system.akka.hostname}":"${com.rentalcar.system.akka.port}
+	  ]
+  }
+}
+
+# Configuración del servidor Redis
+redis {
+	redisActor = "services.ProductionRedisService"
+}
+
+
+
+pri {
+  hostname = ${com.rentalcar.pri.socket.hostname}
+  port = ${com.rentalcar.pri.socket.port}
+  port = ${?PPORT}
+  psPath="akka.tcp://"${akka.cluster.name}"@"${com.rentalcar.system.akka.hostname}":"${com.rentalcar.system.akka.port}
+  #Dejar a 0 si no es para hacer stress test
+  stressTestRateMultiplier = 0
+  #Cantidad de actores que trabajarán en la obtención de precios
+  max-price-workers = 10
+}
+
+# Origen de datos donde están configurados los daemon de Log (donde se encuentra la tabla ConfiguracionDaemonServidores)
+log_db {
+  profile = "slick.jdbc.SQLServerProfile$"
+  db {
+    url = ${com.rentalcar.db.log.url}
+    driver = "net.sourceforge.jtds.jdbc.Driver"
+    user = ${com.rentalcar.db.log.user}
+    password = ${com.rentalcar.db.log.password}
+    connectionTestQuery="select 1"
+  }
+}
+
+# Lista de servidores de log que se usa en caso de que no se pueda conseguir de "log_db"
+log.servers=["192.168.56.101"]
+
+# Template de configuración que se usa para las conexiones a los distintos daemos de LOG
+# No tiene configurada la URL porque se especifica en runtime
+template_log_db {
+  profile = "slick.jdbc.SQLServerProfile$"
+  db {
+    driver = "net.sourceforge.jtds.jdbc.Driver"
+    user = ${com.rentalcar.db.log.user}
+    password = ${com.rentalcar.db.log.password}
+    connectionTestQuery="select 1"
+  }
+}
+
+
+

@@ -1,0 +1,11 @@
+---
+
+###
+service_name: "SARSISBRIDGE"
+service_port: "9001"
+service_secure_port: "9444"
+psexec_service_user: "svc_ansible_admin"
+
+####
+
+project_root: "{{ project_installation_dest }}"

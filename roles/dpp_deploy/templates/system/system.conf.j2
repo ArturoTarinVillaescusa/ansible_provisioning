@@ -1,0 +1,123 @@
+##############################
+#  CONFIGURACIÓN DEL MÓDULO  #
+##############################
+
+com.rentalcar {
+	system {
+	    #Hostname/IP y puerto del nodo akka
+		akka.hostname = "{{ pricing_system_akka_hostname | default('127.0.0.1') }}"
+		akka.port = {{ pricing_system_akka_port | default('2555') }}
+	}
+}
+
+
+
+
+
+#############################################################################
+#                        A  T  E  N  C  I  Ó  N                             #
+# A partir de aquí mejor no tocar si no se sabe lo que se está haciendo ;-) #
+#############################################################################
+# Configuración común del cluster (proviene de core)
+include "cluster.conf"
+# Configuración común de las opciones de serialización (proviene de core)
+include "serialization.conf"
+# Configuración común del BBDD (proviene de core)
+include "db.conf"
+
+
+
+akka {
+	loglevel = "DEBUG"
+
+	remote {
+		netty.tcp {
+			hostname = ${com.rentalcar.system.akka.hostname}
+			port = ${com.rentalcar.system.akka.port}
+            maximum-frame-size = 3048 kB
+		}
+	}
+
+	// Hace que el ActorLogging sea mucho más simple
+	loggers = ["akka.event.slf4j.Slf4jLogger"]
+
+	// Info sobre como configurar las expresiones en http://www.quartz-scheduler.org/documentation/quartz-2.2.x/tutorials/tutorial-lesson-06.html
+	quartz {
+		schedules {
+			SyncDbCron {
+				description = "Cron que sincroniza las tablas externas de BDSIGGER cada hora de 8h a 21h"
+				expression = "0 0 8-21 ? * *"
+			}
+            EventLogCompressionCron {
+                description = "Tarea que comprime el EventLog cada día"
+                expression = "0 20 2 ? * *"
+            }
+			CheckForExpiredRatesCron {
+				description = "Cron que comprueba los rates caducados cada 24h"
+				expression = "0 0 2 ? * *"
+			}
+			CheckForExpiredRulesCron {
+				description = "Cron que comprueba las rules caducadas cada 24h"
+				expression = "0 10 2 ? * *"
+            }
+            DashboardCalculationsCron {
+                description = "Cron que calcula los totales de rates y rules para el dashboard cada día"
+                expression = "0 20 3 ? * *"
+            }
+			AlertCheckerCron {
+				description = "Cron que ejecuta las tareas que comprueban si hay alertas cada hora de 8h a 21h"
+				expression = "0 0 8-21 ? * *"
+			}
+		}
+	}
+}
+
+my-blocking-dispatcher {
+	type = Dispatcher
+	executor = "thread-pool-executor"
+
+	thread-pool-executor {
+		fixed-pool-size = 16
+	}
+
+	throughput = 100
+}
+
+# Batch de registros de eventlog que se cargan durante la sincronización
+syncData.loader.batchSize = 100
+
+# Configuración de daemons
+daemons {
+    syncData {
+        enabled = true
+    }
+    stateManager {
+        enabled = true
+        runCleanUpDeactivationWorks = true
+    }
+    eventCompressor {
+        enabled = true
+        runAtStart = true
+        gracePeriodInDays = 1
+    }
+    syncExternalTables {
+        enabled = true
+        runAtStart = false
+    }
+    dashboardData {
+        enabled = true
+        runAtStart = false
+    }
+    searchTables {
+        runMigration = false
+    }
+	alertChecker {
+		enabled = true
+		runAtStart = true
+	}
+}
+
+runRateTypeMigration {
+	enabled = false
+	csvFile = ""
+}

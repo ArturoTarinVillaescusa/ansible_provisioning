@@ -1,0 +1,3 @@
+UPDATE [BDSIGGER].SIS.ConfiguracionDaemonServidores
+SET Activo = 0
+WHERE NombreServidor = '{{ ansible_hostname }}' AND NombreDaemon = '{{ service_name }}'

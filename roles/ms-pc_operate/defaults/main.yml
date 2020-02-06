@@ -1,0 +1,10 @@
+---
+
+###
+service_name: "MS-PC"
+ms_pc_service_name: "MS-PC"
+psexec_service_user: "svc_ansible_admin"
+
+####
+
+project_root: "{{ project_installation_dest }}"

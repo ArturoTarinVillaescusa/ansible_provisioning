@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.9.0">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+      <configVersion>1</configVersion>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.joelj.jenkins.eztemplates.TemplateImplementationProperty plugin="ez-templates@1.3.0">
+      <templateJobName>JOB-deliver-TEMPLATE</templateJobName>
+      <syncMatrixAxis>true</syncMatrixAxis>
+      <syncDescription>false</syncDescription>
+      <syncBuildTriggers>true</syncBuildTriggers>
+      <syncDisabled>false</syncDisabled>
+      <syncSecurity>true</syncSecurity>
+      <syncScm>true</syncScm>
+      <syncOwnership>true</syncOwnership>
+      <syncAssignedLabel>true</syncAssignedLabel>
+      <exclusions>
+        <string>ez-templates</string>
+        <string>job-params</string>
+        <string>disabled</string>
+        <string>description</string>
+      </exclusions>
+    </com.joelj.jenkins.eztemplates.TemplateImplementationProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions class="linked-list">
+        <hudson.model.ChoiceParameterDefinition>
+          <name>RAMA</name>
+          <description>Elige la rama a entregar en Nexus</description>
+          <choices>
+            <string>develop</string>
+            <string>release</string>
+            <string>hotfix</string>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NOMBRE_JOB</name>
+          <description>Nombre BASE del job del que entregar los artefactos</description>
+          <defaultValue>{{ build_name }}-build</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NEXUS_REPO</name>
+          <description>Nombre del repositorio de Nexus donde copiar los artefactos</description>
+          <defaultValue>{{ nexus_repo_name }}</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ARTEFACTOS</name>
+          <description>Nombre de los binarios a copiar a Nexus (permite comodines *,?)</description>
+          {% if build_builders_maven | bool %}
+          <defaultValue>{{ build_name | lower }}-build-*.jar</defaultValue>
+          {% else %}
+          <defaultValue>{{ build_name | lower }}-build-*.zip</defaultValue>
+          {% endif %}
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.BatchFile>
+      <command>del *.* /S /Q</command>
+    </hudson.tasks.BatchFile>
+    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.38.1">
+      <project>${NOMBRE_JOB}-${RAMA}</project>
+      <filter></filter>
+      <target></target>
+      <excludes></excludes>
+      <selector class="hudson.plugins.copyartifact.StatusBuildSelector">
+        <stable>true</stable>
+      </selector>
+      <flatten>true</flatten>
+      <doNotFingerprintArtifacts>false</doNotFingerprintArtifacts>
+    </hudson.plugins.copyartifact.CopyArtifact>
+    <hudson.tasks.BatchFile>
+      <command>powershell -command &quot;&amp; {(New-Object System.Net.WebClient).DownloadFile(&apos;http://desreposrv:10081/repository/buildTools/curl.ex_&apos;, &apos;curl.exe&apos;) }&quot;&#xd;
+curl -v -u %NEXUS_USER%:%NEXUS_PASS% --upload-file %ARTEFACTOS% http://desreposrv:10081/repository/%NEXUS_REPO%/</command>
+    </hudson.tasks.BatchFile>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper plugin="credentials-binding@1.12">
+      <bindings>
+        <org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+          <credentialsId>d2b2e40e-3f8f-42ce-82b0-ae0a8dcac23a</credentialsId>
+          <usernameVariable>NEXUS_USER</usernameVariable>
+          <passwordVariable>NEXUS_PASS</passwordVariable>
+        </org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+      </bindings>
+    </org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper>
+  </buildWrappers>
+</project>

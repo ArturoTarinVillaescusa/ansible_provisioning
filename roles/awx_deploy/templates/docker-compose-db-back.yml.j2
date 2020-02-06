@@ -1,0 +1,16 @@
+#jinja2: lstrip_blocks: True
+version: '2'
+services:
+  postgres_backup:
+    image: postgres:9.6
+    volumes:
+      - {{ docker_compose_dir }}/.pgpass:/root/.pgpass
+      - {{ docker_compose_dir }}/backup_postgres.sh:/root/backup_postgres.sh
+      - {{ postgres_data_dir }}:/var/lib/postgresql/data:Z
+      - /ansible/pgbackup:/tmp/backup
+    entrypoint:
+      - /root/backup_postgres.sh
+networks:
+  default:
+    external:
+      name: awx_net

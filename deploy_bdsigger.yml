@@ -1,0 +1,18 @@
+#
+# Playbook to deploy BDSIGGER
+#
+# Variables:
+#
+# bdsigger_db_name
+# bdsigger_host
+# bdsigger_user
+# bdsigger_pass
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=bdsigger deploy_bdsigger.yml --extra-vars "bdsigger_db_name='BDSIGGER' bdsigger_host='127.0.0.1' bdsigger_user='user' bdsigger_pass='changeme'"
+#
+- hosts: all
+  gather_facts: false
+  roles:
+    - deploy_bdsigger

@@ -1,0 +1,5 @@
+@ECHO OFF
+SETLOCAL
+title PRECIOS_COMPETENCIA VERSION STOP
+FOR /F "TOKENS=2 DELIMS=," %%I IN ('tasklist /v /fo csv ^| find /i "{{ ms_pc_window_title | default('PRECIOS_COMPETENCIA VERSION') }}"') DO {{ tools_path }}\\PSTools\\pskill.exe -t -accepteula -nobanner %%I
+ENDLOCAL

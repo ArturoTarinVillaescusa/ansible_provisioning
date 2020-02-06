@@ -1,0 +1,101 @@
+#
+# Playbook to deploy DPP
+#
+# Variables:
+#
+# pricing_version: Pricing version to install (2.6.1)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=pricinghosts dpp_deploy.yml --extra-vars "pricing_version=2.6.1"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/dpp_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/dpp_pri_operate/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/dpp_system_operate/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/dpp_system_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_unwanted_items: [ '.git', 'bin', 'conf' ]
+    project_files:
+      - name: "Web Certs File"
+        src: "roles/dpp_deploy/files/certificados/pricing_web.cacerts"
+        dest: "certificados{{ path_separator }}pricing_web.cacerts"
+      - name: "Web Keystore"
+        src: "roles/dpp_deploy/files/certificados/pricing_web.keystore"
+        dest: "certificados{{ path_separator }}pricing_web.keystore"
+    project_templates:
+      - name: "WEB VERSION"
+        src: "roles/dpp_deploy/templates/conf/VERSION.j2"
+        dest: "web{{ path_separator | default('/') }}VERSION.txt"
+      - name: "WEB Logback"
+        src: "roles/dpp_deploy/templates/conf/logback.xml.j2"
+        dest: "web{{ path_separator | default('/') }}logback.xml"
+      - name: "WEB DB conf"
+        src: "roles/dpp_deploy/templates/conf/db.conf.j2"
+        dest: "web{{ path_separator | default('/') }}db.conf"
+      - name: "WEB conf"
+        src: "roles/dpp_deploy/templates/web/web.conf.j2"
+        dest: "web{{ path_separator | default('/') }}web.conf"
+      - name: "WEB run_web executable"
+        src: "roles/dpp_deploy/templates/web/run_web.bat.j2"
+        dest: "web{{ path_separator | default('/') }}run_web.bat"
+      - name: "WEB check web executable"
+        src: "roles/dpp_deploy/templates/web/check_web.bat.j2"
+        dest: "web{{ path_separator | default('/') }}check_web.bat"
+      - name: "PRI VERSION"
+        src: "roles/dpp_deploy/templates/conf/VERSION.j2"
+        dest: "pri{{ path_separator | default('/') }}VERSION.txt"
+      - name: "PRI Logback"
+        src: "roles/dpp_deploy/templates/conf/logback.xml.j2"
+        dest: "pri{{ path_separator | default('/') }}logback.xml"
+      - name: "PRI DB conf"
+        src: "roles/dpp_deploy/templates/conf/db.conf.j2"
+        dest: "pri{{ path_separator | default('/') }}db.conf"
+      - name: "PRI conf"
+        src: "roles/dpp_deploy/templates/pri/pri.conf.j2"
+        dest: "pri{{ path_separator | default('/') }}pri.conf"
+      - name: "PRI run_pri executable"
+        src: "roles/dpp_deploy/templates/pri/run_pri.bat.j2"
+        dest: "pri{{ path_separator | default('/') }}run_pri.bat"
+      - name: "PRI check web executable"
+        src: "roles/dpp_deploy/templates/pri/check_pri.bat.j2"
+        dest: "pri{{ path_separator | default('/') }}check_pri.bat"
+      - name: "SYSTEM VERSION"
+        src: "roles/dpp_deploy/templates/conf/VERSION.j2"
+        dest: "system{{ path_separator | default('/') }}VERSION.txt"
+      - name: "SYSTEM Logback"
+        src: "roles/dpp_deploy/templates/conf/logback.xml.j2"
+        dest: "system{{ path_separator | default('/') }}logback.xml"
+      - name: "SYSTEM DB conf"
+        src: "roles/dpp_deploy/templates/conf/db.conf.j2"
+        dest: "system{{ path_separator | default('/') }}db.conf"
+      - name: "SYSTEM conf"
+        src: "roles/dpp_deploy/templates/system/system.conf.j2"
+        dest: "system{{ path_separator | default('/') }}system.conf"
+      - name: "SYSTEM check web executable"
+        src: "roles/dpp_deploy/templates/system/check_system.bat.j2"
+        dest: "system{{ path_separator | default('/') }}check_system.bat"
+      - name: "SYSTEM run_system executable"
+        src: "roles/dpp_deploy/templates/system/run_system.bat.j2"
+        dest: "system{{ path_separator | default('/') }}run_system.bat"
+    project_command_copy_remote_files: []
+    project_pre_deploy_commands: []
+    project_post_deploy_commands: []
+  pre_tasks:
+    - name: Check ansible config for PRICING
+      assert:
+        that:
+        - "pricing_version is defined"
+
+    - include_tasks: roles/dpp_web_operate/tasks/main.yml operation=stop
+    - include_tasks: roles/dpp_pri_operate/tasks/main.yml operation=stop
+    - include_tasks: roles/dpp_system_operate/tasks/main.yml operation=stop
+  roles:
+    - dpp_deploy
+  post_tasks:
+    - include_tasks: roles/dpp_system_operate/tasks/main.yml operation=start
+    - include_tasks: roles/dpp_pri_operate/tasks/main.yml operation=start
+    - include_tasks: roles/dpp_web_operate/tasks/main.yml operation=start

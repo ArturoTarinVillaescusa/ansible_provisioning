@@ -1,0 +1,61 @@
+---
+- name: "(Templated Setup: All NGINX) Dynamically Generate NGINX Main Configuration File"
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    backup: yes
+  when: main_template_enable
+  become: true
+  notify: "Reload NGINX"
+
+- name: "(Templated Setup: All NGINX) Ensure NGINX HTTP Directory Exists"
+  file:
+    path: /etc/nginx/conf.d/http
+    state: directory
+  become: true
+  when: http_template_enable
+
+- name: "(Templated Setup: All NGINX) Dynamically Generate NGINX HTTP Configuration Files"
+  template:
+    src: "http/default.conf.j2"
+    dest: /etc/nginx/conf.d/http/{{ item.name }}.conf
+    backup: yes
+  with_items: "{{ http_template_items }}"
+  become: true
+  when: http_template_enable
+  notify: "Reload NGINX"
+
+- name: "(Templated Setup: All NGINX) Ensure NGINX Upstream Directory Exists"
+  file:
+    path: /etc/nginx/conf.d/upstream
+    state: directory
+  become: true
+  when: upstream_template_enable
+
+- name: "(Templated Setup: All NGINX) Dynamically Generate NGINX Upstream Configuration Files"
+  template:
+    src: "upstream/default.conf.j2"
+    dest: /etc/nginx/conf.d/upstream/{{ item.name }}.conf
+    backup: yes
+  become: true
+  with_items: "{{ upstream_template_items }}"
+  when: upstream_template_enable
+  notify: "Reload NGINX"
+
+- name: "(Templated Setup: All NGINX) Ensure NGINX Stream Directory Exists"
+  file:
+    path: /etc/nginx/conf.d/stream
+    state: directory
+  become: true
+  when: stream_template_enable
+
+- name: "(Templated Setup: All NGINX) Dynamically Generate NGINX Stream Configuration Files"
+  template:
+    src: "{{ item }}"
+    dest: /etc/nginx/conf.d/stream/{{ item | basename | regex_replace('\.j2','') }}
+    backup: yes
+  become: true
+  with_fileglob:
+    - "../templates/stream/*.j2"
+  when: stream_template_enable
+  notify: "Reload NGINX"

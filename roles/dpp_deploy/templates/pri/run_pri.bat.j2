@@ -1,0 +1,19 @@
+@echo off
+mode 101,24
+
+REM ESTA PARTE INCLUYE LA VERSION EN EL TITULO
+REM --------------------------------------------------------------------
+setlocal enabledelayedexpansion
+set SEPARATOR=/
+set filecontent=
+for /f "delims=" %%a in (C:\PricingSystem\current\PRI\version.txt) do (
+  set currentline=%%a
+  set filecontent=!filecontent!!currentline!
+)
+title PRI %filecontent%
+REM --------------------------------------------------------------------
+
+set "RUN_HOME=%~dp0"
+set RUN_HOME=%RUN_HOME:~0,-1%
+
+java  -Xms%maxmem%G -Xmx%maxmem%G -XX:+UseG1GC -XX:+PrintGCTimeStamps -XX:+PrintGCDetails -XX:ParallelGCThreads=10 -XX:ConcGCThreads=10 -XX:MaxGCPauseMillis=100 -XX:InitiatingHeapOccupancyPercent=20 -Xloggc:"%RUN_HOME%\gclog.txt" -Dconfig.file="%RUN_HOME%/pri.conf" -Dlogback.configurationFile="%RUN_HOME%/logback.xml" -jar pri.jar

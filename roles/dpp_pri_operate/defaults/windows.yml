@@ -1,0 +1,6 @@
+---
+
+#### Pricing Config
+
+project_installation_dest: "C:\\PricingSystem"
+service_port: 9006

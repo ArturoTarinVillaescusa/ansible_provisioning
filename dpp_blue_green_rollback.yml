@@ -1,0 +1,52 @@
+#
+# Playbook DPP BlueGreen Deployment
+#
+# Variables:
+#
+# pricing_version: DPP version to install (1.4.5)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=dpp dpp_blue_green_deploy.yml --extra-vars "pricing_version=2.14.1"
+#
+
+- hosts: dpp_nginx
+  gather_facts: true
+  pre_tasks:
+    - name: "Get Current Deployment Color"
+      uri:
+        url: "https://{{ awx_hostname | default('awx.labcen.rentalcar.es') }}/api/v2/groups/{{ dpp_deploy_awx_groupid | default('10') }}/variable_data/"
+        method: GET
+        user: "{{ awx_username | default('admin') }}"
+        password: "{{ awx_password | default('password') }}"
+        force_basic_auth: yes
+        status_code: 200
+        body_format: json
+        validate_certs: false
+      run_once: true
+      register: get_pricing_variables
+      delegate_to: localhost
+
+    - name: "Set Target Deployment Color"
+      run_once: true
+      set_fact: target_deploy_color={{'green' if get_pricing_variables.json.current_deploy_version == 'blue' else 'blue'}}
+
+  roles:
+    - { role: bootstrap }
+    - { role: nginx }
+
+  post_tasks:
+    - name: "Set {{ target_deploy_color }} as Current Deployment Color"
+      uri:
+        url: "https://{{ awx_hostname | default('awx.labcen.rentalcar.es') }}/api/v2/groups/{{ dpp_deploy_awx_groupid | default('10') }}/variable_data/"
+        method: PATCH
+        user: "{{ awx_username | default('admin') }}"
+        password: "{{ awx_password | default('password') }}"
+        force_basic_auth: yes
+        status_code: 200
+        body_format: json
+        body: '{ "current_deploy_version": "{{ target_deploy_color }}"}'
+        validate_certs: false
+      register: get_pricing_variables
+      delegate_to: localhost

@@ -1,0 +1,4 @@
+install_packages:
+  - "unzip"
+  - "p7zip-full"
+  - "python3-pip"

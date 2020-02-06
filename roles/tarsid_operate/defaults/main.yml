@@ -1,0 +1,17 @@
+---
+
+###
+service_name: "TAR"
+psexec_service_user: "svc_ansible_admin"
+service_port: '9004'
+
+####
+
+project_root: "{{ project_installation_dest }}"
+
+####
+
+tar_db_host: "{{ ansible_hostname }}"
+tar_db_port: "1433"
+tar_db_user: "sa"
+tar_db_password: "testing2018"

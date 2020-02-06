@@ -1,0 +1,26 @@
+---
+
+###
+service_name: "PRECIOS_COMPETENCIA"
+psexec_service_user: "svc_ansible_admin"
+
+#### ARTIFACT Info
+
+nexus_url: "http://desreposrv.goldcar.es:10081"
+
+nexus_repository: "{{ nexus_url }}/repository/SAR/"
+nexus_artifact_name: "precios_competencia"
+nexus_artifact_version: "{{ ms_pc_version | default('1.4') }}"
+nexus_artifact_file: "{{ nexus_artifact_name }}-{{ nexus_artifact_version }}.zip"
+nexus_artifact_path: "{{ nexus_repository }}{{ nexus_artifact_file }}"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+project_release: "{{ ms_pc_version }}"
+project_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_extract_artifact_name: ""
+project_final_filename: "{{ nexus_artifact_file }}"
+project_deploy_strategy: "nexus"
+project_keep_releases: "2"
+project_unwanted_items: [ '.git' ]

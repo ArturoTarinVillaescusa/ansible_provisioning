@@ -1,0 +1,23 @@
+---
+
+#### ARTIFACT Info
+
+nexus_url: "http://desreposrv.goldcar.es:10081"
+
+nexus_repository: "{{ nexus_url }}/repository/MavenGoldcar/com/goldCar/Scheduler/{{ scheduler_version | default('1.0') }}/"
+nexus_artifact_name: "Scheduler"
+nexus_artifact_version: "{{ scheduler_version | default('1.0') }}"
+nexus_artifact_file: "{{ nexus_artifact_name }}-{{ nexus_artifact_version }}.jar"
+nexus_artifact_path: "{{ nexus_repository }}{{ nexus_artifact_file }}"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+project_release: "{{ scheduler_version }}"
+project_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_extract_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_final_filename: "{{ nexus_artifact_file }}"
+project_deploy_strategy: "nexus"
+project_keep_releases: "5"
+project_unwanted_items: [ '.git' ]
+project_deploy_hook_on_create_build_dir: 'roles/scheduler_deploy/tasks/on_create_build.yml'

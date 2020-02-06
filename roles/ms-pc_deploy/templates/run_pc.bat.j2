@@ -1,0 +1,20 @@
+mode COLS=132 LINES=50
+color 2F
+
+REM ESTA PARTE INCLUYE LA VERSION EN EL TITULO
+REM --------------------------------------------------------------------
+setlocal enabledelayedexpansion
+set SEPARATOR=/
+set filecontent=
+for /f "delims=" %%a in (C:\PricingSystem\precios_competencia\current\version.txt) do (
+  set currentline=%%a
+  set filecontent=!filecontent!!currentline!
+)
+title PRECIOS_COMPETENCIA %filecontent%
+REM --------------------------------------------------------------------
+
+@echo off
+set "RUN_HOME=%~dp0"
+set RUN_HOME=%RUN_HOME:~0,-1%
+
+java -Xms1G -Xmx1G -Dconfig.file="%RUN_HOME%\application.conf" -Dlogback.configurationFile="%RUN_HOME%\logback.xml" -DappID=1 -jar precios_competencia\precios_competencia.jar

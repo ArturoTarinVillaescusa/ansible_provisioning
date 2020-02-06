@@ -1,0 +1,10 @@
+---
+
+###
+service_name: "Tasarauto"
+psexec_service_user: "Administrador"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+project_release: "{{ tasarauto_version }}"

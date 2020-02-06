@@ -1,0 +1,39 @@
+#
+# Playbook to deploy GalaWSD
+#
+# Variables:
+#
+# galawsd_version: GalaWSD version to install (1.05.000-7da47b4)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=galawsdhosts galawsd_deploy.yml --extra-vars "galawsd_version=1.05.000-7da47b4"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/galawsd_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/galawsd_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_templates:
+      - name: "Application Properties"
+        src: "roles/galawsd_deploy/templates/GALAWSD.ini.j2"
+        dest: "GALAWSD.ini"
+      - name: "GalaWSD VERSION"
+        src: "roles/galawsd_deploy/templates/VERSION.j2"
+        dest: "VERSION.txt"
+    project_command_copy_remote_files: []
+    project_post_deploy_commands: []
+
+  pre_tasks:
+    - name: Check ansible config for GalaWSD
+      assert:
+        that:
+        - "galawsd_version is defined"
+
+    - include_tasks: roles/galawsd_operate/tasks/main.yml operation=stop
+  roles:
+    - galawsd_deploy
+  post_tasks:
+    - include_tasks: roles/galawsd_operate/tasks/main.yml operation=start

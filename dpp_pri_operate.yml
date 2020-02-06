@@ -1,0 +1,18 @@
+#
+# Playbook to deploy PRI
+#
+# Variables:
+#
+# operation: start|stop|restart
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=prihosts dpp_pri_operate.yml --extra-vars "operation=restart"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/dpp_pri_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  roles:
+    - dpp_pri_operate

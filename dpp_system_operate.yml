@@ -1,0 +1,18 @@
+#
+# Playbook to deploy SYSTEM
+#
+# Variables:
+#
+# operation: start|stop|restart
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=systemhosts dpp_system_operate.yml --extra-vars "operation=restart"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/dpp_system_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  roles:
+    - dpp_system_operate

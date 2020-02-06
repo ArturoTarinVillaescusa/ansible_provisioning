@@ -1,0 +1,4 @@
+---
+# defaults file for performance_sis
+
+rentalcar_path: "/opt/rentalcar"

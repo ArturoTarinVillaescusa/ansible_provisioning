@@ -1,0 +1,25 @@
+##
+use_docker_compose: true
+docker_compose_dir: /var/lib/awx
+
+# AWX
+awx_web_docker_actual_image: ansible/awx_web:1.0.6.14
+awx_task_docker_actual_image: ansible/awx_task:1.0.6.14
+awx_secret_key: awxsecret
+
+# AWX RABBITMQ
+rabbitmq_version: 3.6.14
+rabbitmq_username: guest                 # RabbitMQ username
+rabbitmq_password: guest                 # RabbitMQ password
+
+# AWX WEB
+host_port: 443
+default_admin_user: admin           # AWX Web Portal username
+default_admin_password: password    # AWX Web Portal password
+
+# AWX POSTGRES
+postgres_data_dir: /ansible/pgdocker
+pg_username: awx
+pg_password: awxpass
+pg_database: awx
+pg_port: 5432

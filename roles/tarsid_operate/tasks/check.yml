@@ -1,0 +1,14 @@
+- name: Test TARSID module
+  uri:
+    url: http://{{ ansible_fqdn }}:9001
+    method: POST
+    body: "{{ lookup('template','roles/tarsid_operate/templates/XML_GetAllGroups.xml.j2') }}"
+    status_code: 200
+    headers:
+      Content-Type: "application/xml"
+    body_format: raw
+    return_content: yes
+  register: test_tarsid
+  delegate_to: localhost
+  failed_when: "'error' in test_tarsid.content"
+  ignore_errors: true

@@ -1,0 +1,66 @@
+---
+
+- name: "Get Current Session Id"
+  win_shell: |
+    $server = "localhost"
+    $users = @()
+    # Query using quser, 2>$null to hide "No users exists...", then skip to the next server
+    $quser = quser /server:$server 2>$null
+    if(!($quser)){
+        Continue
+    }
+    #Remove column headers
+    $quser = $quser[1..$($quser.Count)]
+    foreach($user in $quser){
+      $usersObj = [PSCustomObject]@{SessionId=$Null}
+      $quserData = $user -split "\s+"
+      #We have to splice the array if the session is disconnected (as the SESSIONNAME column quserData[2] is empty)
+      if(($user | select-string "{{ psexec_service_user.split('@')[0] }}") -eq $null){
+          Continue
+      }
+      #We have to splice the array if the session is disconnected (as the SESSIONNAME column quserData[2] is empty)
+      if(($user | select-string "Disc") -ne $null){
+          #User is disconnected
+          $quserData = ($quserData[0..1],"null",$quserData[2..($quserData.Length -1)]) -split "\s+"
+      }
+      # SessionID
+      $users = $quserData[3]
+    }
+    return $users
+  register: current_session_id
+
+- name: "Check to see if JAVA is downloaded"
+  win_stat: path='C:\\Program Files\\Java\\jre1.8.0_161\\bin\\java.exe'
+  register: java_downloaded
+
+- name: "Download JAVA installable"
+  win_copy:
+    src: "jre-8u161-windows-x64.exe"
+    dest: "{{ temp_path }}{{ path_separator }}jre-8u161-windows-x64.exe"
+  when: not java_downloaded.stat.exists
+
+- name: "Install JAVA"
+  win_package:
+    path: '{{ temp_path }}{{ path_separator }}jre-8u161-windows-x64.exe'
+    creates_path: "C:\\Program Files\\Java\\jre1.8.0_161\\bin\\java.exe"
+    arguments: "INSTALL_SILENT=Enable"
+    state: present
+  args:
+    chdir: "{{ temp_path }}{{ path_separator }}"
+  when: not java_downloaded.stat.exists
+
+- name: "Set environment variables for current users"
+  win_environment:
+    state: present
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    level: machine
+  with_items:
+    - {name: "maxmem", value: "{{ pricing_pri_maxmem }}"}
+    - {name: "PRICING_WEB_KEYSTORE_PWD", value: "{{ pricing_web_keyestorepass | default('changeme') }}"}
+
+- name: "Stop REDIS"
+  win_service:
+    name: Redis
+    state: stopped
+  when: ansible_os_family | lower == "windows"

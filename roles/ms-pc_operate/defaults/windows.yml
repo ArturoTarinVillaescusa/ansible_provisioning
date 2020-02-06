@@ -1,0 +1,6 @@
+---
+
+#### MS-PC Config
+
+project_installation_dest: "C:\\PricingSystem\\precios_competencia"
+service_port: 8080

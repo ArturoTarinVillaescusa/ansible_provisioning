@@ -1,0 +1,5 @@
+
+#### Tasarauto Config
+
+psexec_service_user: "Administrador"
+project_installation_dest: "C:\\Microservicios\\Tasarauto"

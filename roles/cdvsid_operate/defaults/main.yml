@@ -1,0 +1,17 @@
+---
+
+###
+service_name: "CDV"
+psexec_service_user: "svc_ansible_admin"
+service_port: "9003"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+
+####
+
+cdv_db_host: "{{ ansible_hostname }}"
+cdv_db_port: "1433"
+cdv_db_user: "sa"
+cdv_db_password: "testing2018"

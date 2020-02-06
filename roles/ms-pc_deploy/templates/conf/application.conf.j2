@@ -1,0 +1,143 @@
+com.goldcar {
+	db.ip = "{{ ms_pc_db_ip | default('127.0.0.1') }}"
+	db.password = "{{ ms_pc_db_password| default('changeme') }}"
+	# Configuración de la BBDD de Competence Prices
+	db.internal {
+		url = "jdbc:jtds:sqlserver://"${com.goldcar.db.ip}"/BDCompetitionPrices{{ ms_pc_db_cluster | default('') }}"
+		user = "asmwr"
+		password = ${com.goldcar.db.password}
+	}
+
+	competition_prices {
+		# Nombre del microservicio
+		name = "precios_competencia"
+		# ID del microservicio (valor por defecto 1, pero se puede especificar por variable de entorno o parámetro de comando)
+		ID = 1
+		ID = ${?appId}
+		# Parámetros http de la api rest
+		http {
+			host = "{{ ms_pc_web_hostname | default('127.0.0.1') }}"
+			port = {{ ms_pc_web_port | default('8080') }}
+			# Path base del api-rest
+			basePath = "competition-prices"
+		}
+		# Establece si está activado el proceso automático de carga de precios de la competencia por csv
+		active = {{ ms_pc_auto_load_active | default('true') }}
+		# Directorio (relativo o absoluto) de donde se cargan los ficheros csv
+		path = "{{ ms_pc_auto_load_path | default('C:/PricingSystem/CSV') }}"
+		# Si se deben o no zipper los directorios de archivos CSV de fechas pasadas
+		archive = {{ ms_pc_auto_load_archive | default('true') }}
+		# Configuración proceso de limpieza de preciso
+		clean {
+			# Si se deben eliminar los precios de temporadas pasadas (dropoff_date < today - offsetInDays)
+			active = {{ ms_pc_auto_load_clean | default('true') }}
+			# Número de días de margen para borrar los precios
+			offsetInDays = {{ ms_pc_auto_load_num_days | default('3') }}
+		}
+		# Establece si sólo se recuperarán los precios de 7 días de los archivos CSV
+		only7days = {{ ms_pc_auto_load_only7days | default('true') }}
+		# Datos FTP para descargar los ficheros csv de PriceSeekers
+		ftp {
+			# Establece si está activada la descarga de ficheros del servidor ftp
+			active = "{{ ms_pc_download_ftp_active | default('true') }}"
+			hostname = "{{ ms_pc_download_ftp_hostname | default('127.0.0.1') }}"
+			port = {{ ms_pc_download_ftp_port | default('22') }}
+			username = "{{ ms_pc_download_ftp_user | default('test') }}"
+			password = "{{ ms_pc_download_ftp_password | default('changeme') }}"
+			remote_dir = "{{ ms_pc_download_ftp_remote_dir | default('/g_files') }}"
+			# Directorio donde se archivaran los ficheros ya procesados. Si no existe el parámetro de borrarán
+			#processed_dir = "C:/PricingSystem/CSV/processed" # Must exists
+			# Número de ficheros CSV que se descargan en cada ejecución del proceso
+			batch = {{ ms_pc_download_ftp_num_batch | default('15') }}
+		}
+	}
+}
+
+
+#############################################################################
+#                        A  T  E  N  C  I  Ó  N                             #
+# A partir de aquí mejor no tocar si no se sabe lo que se está haciendo ;-) #
+#############################################################################
+slick {
+	dbs {
+		# BBDD propia del Pricing System
+		default {
+			profile = "slick.jdbc.SQLServerProfile$"
+			db {
+				url = ${com.goldcar.db.internal.url}
+				driver = "net.sourceforge.jtds.jdbc.Driver"
+				#driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+				user = ${com.goldcar.db.internal.user}
+				password = ${com.goldcar.db.internal.password}
+				connectionTestQuery = "select 1"
+				connectionTimeout = 300000
+				validationTimeout = 300000
+				keepAliveConnection = true
+			}
+			migration = true
+			flyway.locations = "migration"
+		}
+	}
+}
+
+akka {
+	loglevel = "DEBUG"
+
+	system.name = "CompentencePricesSystem"
+
+	// Hace que el ActorLogging sea mucho más simple
+	loggers = ["akka.event.slf4j.Slf4jLogger"]
+
+	// Info sobre como configurar las expresiones en http://www.quartz-scheduler.org/documentation/quartz-2.2.x/tutorials/tutorial-lesson-06.html
+	quartz {
+		schedules {
+			ZipLogFiles {
+				description = "Zippea los archivos csv del dia anterior a las 01:00 horas"
+				expression = "0 0 1 ? * *"
+			}
+			CleanPastPrices {
+				description = "Limpia la tabla de precios borrando los precios de temporadas ya pasadas a las 02:00 horas"
+				expression = "0 0 2 ? * *"
+			}
+		}
+	}
+}
+
+competition_prices {
+	# Establece si está activado el proceso automático de carga de precios de la competencia por csv
+	active=${com.goldcar.competition_prices.active}
+	# Establece cuando tiene que empezar el proceso a ejecutarse desde que se arranca la app
+	# Para más info sobre los posibles valores: https://github.com/typesafehub/config/blob/master/HOCON.md#duration-format
+	scheduleStart=5 seconds
+	# Establece cuando cuanto se tiene que ejecutar el proceso
+	# Para más info sobre los posibles valores: https://github.com/typesafehub/config/blob/master/HOCON.md#duration-format
+	scheduleEvery=1 minute
+	# Si se deben o no zipper los directorios de archivos CSV de fechas pasadas
+	archive = ${?com.goldcar.competition_prices.archive}
+	# Configuración proceso de limpieza de preciso
+	clean {
+		# Si se deben eliminar los precios de temporadas pasadas (dropoff_date < today - offsetInDays)
+		active = ${?com.goldcar.competition_prices.clean.active}
+		# Número de días de margen para borrar los precios
+		offsetInDays = ${?com.goldcar.competition_prices.clean.offsetInDays}
+	}
+	# Establece si sólo se recuperarán los precios de 7 días de los archivos CSV
+	only7days = ${com.goldcar.competition_prices.only7days}
+	# Directorio (relativo o absoluto) de donde se cargan los ficheros csv
+	path=${com.goldcar.competition_prices.path}
+	# Extensiones de los ficheros que se contenplan en el proces
+	extensions = [".csv"]
+	# Datos FTP para descargar los ficheros Excel
+	# Si se comenta esta sección, no se bajarán automáticamente los ficheros del FTP
+	ftp {
+		active = ${?com.goldcar.competition_prices.ftp.active}
+		hostname = ${?com.goldcar.competition_prices.ftp.hostname}
+		port = ${?com.goldcar.competition_prices.ftp.port}
+		username = ${?com.goldcar.competition_prices.ftp.username}
+		password = ${?com.goldcar.competition_prices.ftp.password}
+		local_dir = ${?com.goldcar.competition_prices.path}
+		remote_dir = ${?com.goldcar.competition_prices.ftp.remote_dir}
+		processed_dir = ${?com.goldcar.competition_prices.ftp.processed_dir}
+		batch = ${?com.goldcar.competition_prices.ftp.batch}
+	}
+}

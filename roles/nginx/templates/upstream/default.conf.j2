@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+upstream {{ item.name }} {
+    server {{ item.address}}:{{ item.port }};
+}

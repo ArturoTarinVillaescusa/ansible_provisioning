@@ -1,0 +1,116 @@
+---
+
+- name: Fail if Docker version is < 17.03
+  local_action:
+    module: fail
+    msg: "docker_version must be >= 17.03, yours is set to {{ docker_version }}."
+  when: docker_version | version_compare("17.03", "<")
+
+- name: Install Docker and role dependencies
+  local_action:
+    module: apt
+    name: "{{ item }}"
+    state: "present"
+    install_recommends: False
+  with_items:
+    - "apt-transport-https"
+    - "ca-certificates"
+    - "software-properties-common"
+    - "cron"
+
+- name: Get upstream APT GPG key
+  local_action:
+    module: apt_key
+    id: "{{ docker_apt_key }}"
+    keyserver: "{{ ansible_local.core.keyserver
+                   if (ansible_local|d() and ansible_local.core|d() and
+                       ansible_local.core.keyserver)
+                   else 'hkp://pool.sks-keyservers.net' }}"
+    state: "present"
+
+- name: Configure upstream APT repository
+  local_action:
+    module: apt_repository
+    repo: "{{ docker_repository }}"
+    state: "present"
+    update_cache: True
+
+- name: Install Docker
+  local_action:
+    module: apt
+    name: "docker-{{ docker_edition }}={{ docker_version }}~{{ docker_edition }}-0~{{ ansible_distribution | default('Ubuntu') | lower }}"
+    state: "present"
+    update_cache: True
+    install_recommends: False
+    cache_valid_time: "{{ docker_apt_cache_time }}"
+
+- name: Remove Upstart config file
+  local_action:
+    module: file
+    path: "/etc/default/docker"
+    state: "absent"
+
+- name: Ensure systemd directory exists
+  local_action:
+    module: file
+    path: "/etc/systemd/system"
+    state: "directory"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+
+- name: Generate systemd unit file
+  local_action:
+    module: template
+    src: "etc/systemd/system/docker.service.j2"
+    dest: "/etc/systemd/system/docker.service"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  register: docker_register_systemd_service
+
+- name: Reload systemd daemon
+  local_action: command systemctl daemon-reload
+  notify: ["Restart Docker"]
+  when: (docker_register_systemd_service and
+         docker_register_systemd_service | changed)
+
+- name: Add specific users to "docker" group
+  local_action: 
+    module: user
+    name: "{{ item }}"
+    groups: "docker"
+    append: True
+  with_items: "{{ docker_users }}"
+  when: docker_users
+
+- name: Install Docker Compose
+  local_action:
+    module: get_url
+    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-Linux-x86_64"
+    dest: "/usr/local/bin/docker-compose"
+    force: True
+    owner: "root"
+    group: "root"
+    mode: "0755"
+  when: docker_install_docker_compose
+
+- name: Create cron tasks for Docker commands
+  local_action:
+    module: cron
+    name: "{{ item.name }}"
+    job: "{{ item.job }}"
+    minute: "{{ item.schedule[0] }}"
+    hour: "{{ item.schedule[1] }}"
+    day: "{{ item.schedule[2] }}"
+    month: "{{ item.schedule[3] }}"
+    weekday: "{{ item.schedule[4] }}"
+  with_items: "{{ docker_cron_tasks }}"
+  when: docker_cron_tasks
+
+- name: Install docker-py
+  local_action:
+    module: pip
+    name: "{{ item.name }}"
+  with_items: "{{ docker_pip_dependencies }}"
+

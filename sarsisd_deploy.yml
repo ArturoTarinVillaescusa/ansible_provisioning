@@ -1,0 +1,50 @@
+#
+# Playbook to deploy SARSIS
+#
+# Variables:
+#
+# sarsis_version: SARSIS version to install (1.4.5)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=sarsishosts sarsisd_deploy.yml --extra-vars "sarsisd_version=1.27.001-221d03a"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/sarsisd_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_templates:
+      - name: "CA cert file"
+        src: "roles/sarsisd_deploy/templates/certificados/CA_cert.pem.j2"
+        dest: "certificados{{ path_separator }}CA_cert.pem"
+      - name: "PEM file"
+        src: "roles/sarsisd_deploy/templates/certificados/Cert_privatekey.pem.j2"
+        dest: "certificados{{ path_separator }}Cert_privatekey.pem"
+      - name: "CERT file"
+        src: "roles/sarsisd_deploy/templates/certificados/rentalcar-sarsis.cert.j2"
+        dest: "certificados{{ path_separator }}rentalcar-sarsis.cert"
+      - name: "SARSISD WebServer Properties"
+        src: "roles/sarsisd_deploy/templates/SARSISDWebServer.ini.j2"
+        dest: "SARSISDWebServer.ini"
+      - name: "PrecargasDaos Properties"
+        src: "roles/sarsisd_deploy/templates/PrecargasDaos.ini.j2"
+        dest: "PrecargasDaos.ini"
+    project_command_copy_remote_files: []
+    project_pre_deploy_commands: []
+#      - name: "{{ tools_path }}{{ path_separator }}PSTools{{ path_separator }}pskill.exe -accepteula -nobanner SARSISDWebServer"
+#        failed_when_not: "'Process does not exist' not in pre_deploy_commands.stdout and 'Process SARSISDWebServer killed' not in pre_deploy_commands.stdout"
+    project_post_deploy_commands: []
+#      - "{{ tools_path }}{{ path_separator }}PSTools{{ path_separator }}PSExec64.exe -accepteula -nobanner -h -s -w {{ project_root }}\\current\\ -i {{ current_session_id.stdout | int }} cmd /c start {{ project_root }}\\current\\SARSISDWebServer.exe"
+  pre_tasks:
+    - name: Check ansible config for SARSISD
+      assert:
+        that:
+        - "sarsisd_version is defined"
+
+    - include_tasks: roles/sarsisd_operate/tasks/main.yml operation=stop
+  roles:
+    - sarsisd_deploy
+  post_tasks:
+    - include_tasks: roles/sarsisd_operate/tasks/main.yml operation=start

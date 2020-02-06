@@ -1,0 +1,19 @@
+---
+- name: "(Setup SSL: All NGINX) Ensure NGINX SSL Directory Exists"
+  file:
+    path: /etc/nginx/ssl
+    state: directory
+  become: true
+  when: ssl_template_enable
+
+- name: "(Setup SSL: All NGINX) Dynamically Generate SSL Keys Files"
+  template:
+    src: "ssl/{{ item }}.j2"
+    dest: /etc/nginx/ssl/{{ item }}
+    backup: yes
+  with_items:
+   - cert.crt
+   - cert.key
+  become: true
+  when: ssl_template_enable
+  notify: "Reload NGINX"

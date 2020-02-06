@@ -1,0 +1,21 @@
+---
+# Start NGINX
+- name: "Start NGINX"
+  service:
+    name: nginx
+    state: started
+  become: true
+
+# Restart NGINX
+- name: "Restart NGINX"
+  service:
+    name: nginx
+    state: restarted
+  become: true
+
+# Reload NGINX
+- name: "Reload NGINX"
+  service:
+    name: nginx
+    state: reloaded
+  become: true

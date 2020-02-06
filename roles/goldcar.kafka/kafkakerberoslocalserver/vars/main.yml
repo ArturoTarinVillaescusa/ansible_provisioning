@@ -1,0 +1,9 @@
+---
+# Reverse lookup variables
+bind_folder: "/etc/bind"
+bind_cache_folder: "/var/cache/bind"
+zone_forward: "{{ fqdn }}"
+zone_reverse: "{{ ansible_host.split('.')[2] }}.{{ ansible_host.split('.')[1] }}.{{ ansible_host.split('.')[0] }}.in-addr.arpa"
+bind_forward_file: "db.{{ zone_forward }}"
+bind_reverse_file: "db.{{ ansible_host.split('.')[0] }}.{{ ansible_host.split('.')[1] }}.{{ ansible_host.split('.')[2] }}"
+

@@ -1,0 +1,19 @@
+@echo off
+mode 101,24
+
+REM ESTA PARTE INCLUYE LA VERSION EN EL TITULO
+REM --------------------------------------------------------------------
+setlocal enabledelayedexpansion
+set SEPARATOR=/
+set filecontent=
+for /f "delims=" %%a in (C:\Microservicios\Scheduler\current\version.txt) do (
+  set currentline=%%a
+  set filecontent=!filecontent!!currentline!
+)
+title Scheduler %filecontent%
+REM --------------------------------------------------------------------
+
+set "RUN_HOME=%~dp0"
+set RUN_HOME=%RUN_HOME:~0,-1%
+
+java -jar -Dfile.encoding=UTF-8 -Dspring.profiles.active={{ scheduler_env }} {{ project_artifact_name }}.jar "{{ scheduler_app_name | default('SchedulerApp') }}" "{{ scheduler_goldcar_daemon_id | default(2) }}" "{{ scheduler_port | default('8015') }}" "{{ scheduler_hostname | default('127.0.0.1') }}" ""

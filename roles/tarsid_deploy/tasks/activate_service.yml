@@ -1,0 +1,22 @@
+- name: "Copy Activate SQL file"
+  local_action:
+    module: template
+    src: "roles/tarsid_deploy/templates/sql/activate_service.sql.j2"
+    dest: "/tmp/activate_tar.sql"
+
+- name: "Activate TAR"
+  local_action:
+    module: mssql_db
+    name: 'BDSIGGER'
+    login_host: '{{ tar_db_host }}'
+    login_user: '{{ tar_db_user }}'
+    login_password: '{{ tar_db_password }}'
+    login_port: '{{ tar_db_port }}'
+    state: import
+    target: '/tmp/activate_tar.sql'
+
+- name: "Remove Activate SQL file"
+  local_action:
+    module: file
+    state: absent
+    path: "/tmp/activate_tar.sql"

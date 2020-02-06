@@ -1,0 +1,23 @@
+- name: "Remove REDIS dump file"
+  file:
+    path: "{{ redis_expand_dir }}{{ path_separator }}dump.rdb"
+    state: absent
+  when: ansible_os_family | lower == "debian"
+
+- name: "Remove REDIS dump file"
+  win_file:
+    path: "{{ redis_expand_dir }}{{ path_separator }}dump.rdb"
+    state: absent
+  when: ansible_os_family | lower == "windows"
+
+- name: "Start REDIS"
+  service:
+    name: redis
+    state: started
+  when: ansible_os_family | lower == "debian"
+
+- name: "Start REDIS"
+  win_service:
+    name: Redis
+    state: started
+  when: ansible_os_family | lower == "windows"

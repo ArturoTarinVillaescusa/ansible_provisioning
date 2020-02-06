@@ -1,0 +1,3 @@
+dependencies:
+    - java
+    - deploy_microservice

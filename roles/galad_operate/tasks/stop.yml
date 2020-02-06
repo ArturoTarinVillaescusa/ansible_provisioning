@@ -1,0 +1,36 @@
+  - name: "Stop {{ service_name }}"
+    debug: msg="Stopping {{ service_name }}"
+
+  - name: "Get Current Session Id"
+    win_shell: |
+      $server = "localhost"
+      $users = @()
+      # Query using quser, 2>$null to hide "No users exists...", then skip to the next server
+      $quser = quser /server:$server 2>$null
+      if(!($quser)){
+          Continue
+      }
+      #Remove column headers
+      $quser = $quser[1..$($quser.Count)]
+      foreach($user in $quser){
+        $usersObj = [PSCustomObject]@{SessionId=$Null}
+        $quserData = $user -split "\s+"
+        #We have to splice the array if the session is disconnected (as the SESSIONNAME column quserData[2] is empty)
+        if(($user | select-string "{{ psexec_service_user.split('@')[0] }}") -eq $null){
+            Continue
+        }
+        #We have to splice the array if the session is disconnected (as the SESSIONNAME column quserData[2] is empty)
+        if(($user | select-string "Disc") -ne $null){
+            #User is disconnected
+            $quserData = ($quserData[0..1],"null",$quserData[2..($quserData.Length -1)]) -split "\s+"
+        }
+        # SessionID
+        $users = $quserData[3]
+      }
+      return $users
+    register: current_session_id
+
+  - name: "Stop {{ service_name }} instance"
+    win_command: "{{ tools_path }}{{ path_separator }}PSTools{{ path_separator }}pskill.exe -accepteula -nobanner GALAD chdir={{ project_root }}{{ path_separator }}current"
+    register: kill_galad_command
+    failed_when: "'Process does not exist' not in kill_galad_command.stdout and 'Process GALAD killed' not in kill_galad_command.stdout"

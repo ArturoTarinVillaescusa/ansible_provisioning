@@ -1,0 +1,47 @@
+---
+
+###
+service_name: "DPP"
+pri_service_name: "PRI"
+psexec_service_user: "svc_ansible_admin"
+
+#### ARTIFACT Info
+
+nexus_url: "http://desreposrv.rentalcar.es:10081"
+
+nexus_repository: "{{ nexus_url }}/repository/SAR/"
+nexus_artifact_name: "pricing_platform-build-release"
+nexus_artifact_version: "{{ pricing_version | default('2.61.0') }}"
+nexus_artifact_file: "{{ nexus_artifact_name }}-{{ nexus_artifact_version }}.zip"
+nexus_artifact_path: "{{ nexus_repository }}{{ nexus_artifact_file }}"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+project_release: "{{ pricing_version }}"
+project_artifact_name: "{{ nexus_artifact_name }}-{{ project_release }}"
+project_extract_artifact_name: ""
+project_final_filename: "{{ nexus_artifact_file }}"
+project_deploy_strategy: "nexus"
+project_keep_releases: "2"
+project_unwanted_items: [ '.git' ]
+project_deploy_hook_on_create_build_dir: 'roles/dpp_deploy/tasks/on_create_build.yml'
+project_deploy_hook_on_initialize: 'roles/dpp_deploy/tasks/on_initialize_deploy.yml'
+project_deploy_hook_on_finalize: 'roles/dpp_deploy/tasks/on_finalize_deploy.yml'
+
+####
+
+pricing_pri_maxmem: "4"
+
+####
+
+pri_db_host: "{{ ansible_hostname }}"
+pri_db_port: "1433"
+pri_db_user: "sa"
+pri_db_password: "testing2018"
+
+####
+
+available_pris:
+  - name: "127.0.0.1"
+    port: "2553"

@@ -1,0 +1,15 @@
+- name: Check to see if there is a current version
+  win_stat: path="{{ project_root }}/current"
+  register: current_version_installed
+
+- name: "Stop CDV"
+  include_tasks: stop.yml
+  when: (operation | default(False) == "stop" or operation | default(False) == "restart") and current_version_installed.stat.exists
+
+- name: "Start CDV"
+  include_tasks: start.yml
+  when: (operation | default(False) == "start" or operation | default(False) == "restart") and current_version_installed.stat.exists
+
+- name: "Check CDV"
+  include_tasks: check.yml
+  when: (operation | default(False) == "start" or operation | default(False) == "check" or operation | default(False) == "restart") and current_version_installed.stat.exists

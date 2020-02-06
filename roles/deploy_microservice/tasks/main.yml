@@ -1,0 +1,284 @@
+---
+
+### Initialize
+
+- name: Check to see if there is a current version
+  stat: path="{{ project_root }}/current"
+  register: current_version_installed
+  when: current_version_installed.stat.exists and ansible_os_family | lower == "debian"
+
+- name: Check to see if there is a current version
+  win_stat: path="{{ project_root }}/current"
+  register: current_version_installed
+  when: current_version_installed.stat.exists and ansible_os_family | lower == "windows"
+
+- name: Run pre_deploy_commands in the new_release_path
+  command: "{{ item.name }} chdir={{ project_root }}{{ path_separator }}current"
+  with_items: "{{ project_pre_deploy_commands }}"
+  environment: "{{ project_environment }}"
+  register: pre_deploy_commands
+  failed_when: "{{ item.failed_when_not }}"
+  when: current_version_installed.stat.exists and ansible_os_family | lower == "debian"
+
+- name: Run pre_deploy_commands in the new_release_path
+  win_command: "{{ item.name }} chdir={{ project_root }}{{ path_separator }}current"
+  with_items: "{{ project_pre_deploy_commands }}"
+  environment: "{{ project_environment }}"
+  register: pre_deploy_commands
+  failed_when: "{{ item.failed_when_not }}"
+  when: current_version_installed.stat.exists and ansible_os_family | lower == "windows"
+
+- name: Include initialize hook
+  include_tasks: "{{ project_deploy_hook_on_initialize }}"
+  when: project_deploy_hook_on_initialize is defined
+
+- name: Ensure new release path is present
+  file: "path='{{ project_root }}/releases/{{ project_release|default(omit) }}' state='directory'"
+  when: ansible_os_family | lower == "debian"
+
+- name: Ensure new release path is present
+  win_file: "path='{{ project_root }}/releases/{{ project_release|default(omit) }}' state='directory'"
+  when: ansible_os_family | lower == "windows"
+
+- name: Initialize
+  deploy_helper: "path={{ project_root }} release={{ project_release|default(omit) }} state=present shared_path={{ project_shared_path }}"
+  register: initialize_deploy
+  when: ansible_os_family | lower == "debian"
+
+- name: Initialize
+  win_deploy_helper: "path={{ project_root }} release={{ project_release|default(omit) }} state=present shared_path={{ project_shared_path }}"
+  register: initialize_deploy
+  when: ansible_os_family | lower == "windows"
+
+
+### Update source
+- name: Ensure shared sources are present
+  file: "path='{{ project_root }}/{{ project_source_path }}' state='directory'"
+  when: ansible_os_family | lower == "debian"
+
+- name: Ensure shared sources are present
+  win_file: "path='{{ project_root }}/{{ project_source_path }}' state='directory'"
+  when: ansible_os_family | lower == "windows"
+
+- name: Include update_source hook
+  include_tasks: "{{ project_deploy_hook_on_update_source }}"
+  when: project_deploy_hook_on_update_source is defined
+
+- name: Clone project files
+  git: "repo={{ project_git_repo }} dest={{ project_source_path }} version={{ project_version }}"
+  when: project_deploy_strategy == 'git'
+
+- name: Rsync project files
+  synchronize: "src={{ project_local_path }} dest={{ project_source_path }} rsync_timeout={{ project_deploy_synchronize_timeout }} delete={{ project_deploy_synchronize_delete }} recursive=yes "
+  when: project_deploy_strategy == 'synchronize'
+
+- name: Artifact download artifact from Nexus
+  get_url:
+    url: "{{ nexus_artifact_path }}"
+    dest: "{{ project_root }}/{{ project_source_path }}"
+    timeout: 120
+  when: project_deploy_strategy == 'nexus' and ansible_os_family | lower == "debian"
+
+- name: Artifact download artifact from Nexus
+  win_get_url:
+    url: "{{ nexus_artifact_path }}"
+    dest: "{{ project_root }}/{{ project_source_path }}"
+    timeout: 120
+  when: project_deploy_strategy == 'nexus' and ansible_os_family | lower == "windows"
+
+- name: Artifact unzip
+  command: "7z x {{ project_final_filename }} -o{{ project_root }}/{{ project_source_path }}/{{ project_extract_artifact_name | default('') }} -aoa"
+  args:
+    chdir: "{{ project_root }}/{{ project_source_path }}"
+  when: project_deploy_strategy == 'nexus' and ansible_os_family | lower == "debian" and (project_final_filename[-2:] == "7z" or project_final_filename[-3:] == "zip")
+
+- name: Artifact unzip
+  win_command: "7z x {{ project_final_filename }} -o{{ project_root }}\\{{ project_source_path }}\\{{ project_extract_artifact_name | default('') }} -aoa"
+  args:
+    chdir: "{{ project_root }}/{{ project_source_path }}"
+  when: project_deploy_strategy == 'nexus' and ansible_os_family | lower == "windows" and (project_final_filename[-2:] == "7z" or project_final_filename[-3:] == "zip")
+
+- name: write unfinished file
+  file: "path={{ deploy_helper.new_release_path }}/{{ deploy_helper.unfinished_filename }} state=touch"
+  when: ansible_os_family | lower == "debian"
+
+- name: write unfinished file
+  win_file: "path={{ deploy_helper.new_release_path }}/{{ deploy_helper.unfinished_filename }} state=touch"
+  when: ansible_os_family | lower == "windows"
+
+
+### Create build dir
+- name: Include create_build_dir hook
+  include_tasks: "{{ project_deploy_hook_on_create_build_dir }}"
+  when: project_deploy_hook_on_create_build_dir is defined
+
+- name: Copy files to new build dir
+  command: "cp -prT {{ project_artifact_name }} {{ deploy_helper.new_release_path }}"
+  args:
+    chdir: "{{ project_root }}/{{ project_source_path }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Copy files to new release dir
+  win_command: "xcopy {{ project_artifact_name }} {{ deploy_helper.new_release_path }} /e /s /i /Y"
+  args:
+    chdir: "{{ project_root }}/{{ project_source_path }}"
+  when: ansible_os_family | lower == "windows"
+
+- name: Remove unwanted files/folders from new release
+  file: "path={{ deploy_helper.new_release_path }}/{{ item }} state=absent"
+  with_items: "{{ project_unwanted_items }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Remove unwanted files/folders from new release
+  win_file:
+    path: "{{ deploy_helper.new_release_path }}/{{ item }}"
+    state: absent
+  with_items: "{{ project_unwanted_items }}"
+  when: ansible_os_family | lower == "windows"
+
+- name: Copy project files
+  copy: src={{ item.src }} dest={{ deploy_helper.new_release_path }}/{{ item.dest }} mode={{ item.mode|default('0644') }}
+  with_items: "{{ project_files }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Copy project files
+  win_copy:
+    src: "{{ item.src }}"
+    dest: "{{ deploy_helper.new_release_path }}/{{ item.dest }}"
+    mode: "{{ item.mode|default('0644') }}"
+  with_items: "{{ project_files }}"
+  when: ansible_os_family | lower == "windows"
+
+- name: Copy project templates
+  template: src={{ item.src }} dest={{ deploy_helper.new_release_path }}/{{ item.dest }} mode={{ item.mode|default('0644') }}
+  with_items: "{{ project_templates }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Copy project templates
+  win_template:
+    src: "{{ item.src }}"
+    dest: "{{ deploy_helper.new_release_path }}/{{ item.dest }}"
+  with_items: "{{project_templates}}"
+  when: ansible_os_family | lower == "windows"
+
+- name: Copy other project files from remote system
+  command: "{{ item.cmd }}"
+  args:
+    chdir: "{{ project_root }}/{{ project_source_path }}/{{ project_artifact_name }}"
+  with_items: "{{ project_command_copy_remote_files }}"
+  when: ansible_os_family | lower == item.when and ansible_os_family | lower == "debian"
+
+- name: Copy other project files from remote system
+  win_command: "{{ item.cmd }}"
+  args:
+    chdir: "{{ project_root }}/{{ project_source_path }}/{{ project_artifact_name }}"
+  with_items: "{{ project_command_copy_remote_files }}"
+  when: ansible_os_family | lower == item.when and ansible_os_family | lower == "windows"
+
+### Perform build
+- name: Include perform_build hook
+  include_tasks: "{{ project_deploy_hook_on_perform_build }}"
+  when: project_deploy_hook_on_perform_build is defined
+
+- name: Run pre_build_commands in the new_release_path
+  command: "{{ item }} chdir={{ deploy_helper.new_release_path }}"
+  with_items: "{{ project_pre_build_commands }}"
+  environment: "{{ project_environment }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Run pre_build_commands in the new_release_path
+  win_command: "{{ item }} chdir={{ deploy_helper.new_release_path }}\\{{ project_artifact_name }}"
+  with_items: "{{ project_pre_build_commands }}"
+  environment: "{{ project_environment }}"
+  when: ansible_os_family | lower == "windows"
+
+### Make shared resources
+- name: Include make_shared_resources hook
+  include_tasks: "{{ project_deploy_hook_on_make_shared_resources }}"
+  when: project_deploy_hook_on_make_shared_resources is defined
+
+- name: Ensure shared sources are present
+  file: "path='{{ deploy_helper.shared_path }}/{{ item.src }}' state={{ item.type|default('directory') }}"
+  with_items: "{{ project_shared_children }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Ensure shared sources are present
+  win_file: "path='{{ deploy_helper.shared_path }}/{{ item.src }}' state={{ item.type|default('directory') }}"
+  with_items: "{{ project_shared_children }}"
+  when: ansible_os_family | lower == "windows"
+
+- name: Ensure directories for shared paths to go into are present
+  file: "path={{ [deploy_helper.new_release_path, item.path] | join('/') | dirname }} state=directory recurse=yes"
+  with_items: "{{ project_shared_children }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Ensure directories for shared paths to go into are present
+  win_file: "path={{ [deploy_helper.new_release_path, item.path] | join('/') | dirname }} state=directory recurse=yes"
+  with_items: "{{ project_shared_children }}"
+  when: ansible_os_family | lower == "windows"
+
+- name: Ensure shared paths themselves are absent
+  file: "path='{{ deploy_helper.new_release_path }}/{{ item.path }}' state=absent"
+  with_items: "{{ project_shared_children }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Ensure shared paths themselves are absent
+  win_file: "path='{{ deploy_helper.new_release_path }}/{{ item.path }}' state=absent"
+  with_items: "{{ project_shared_children }}"
+  when: ansible_os_family | lower == "windows"
+
+- name: Create shared symlinks
+  file: "path='{{ deploy_helper.new_release_path }}/{{ item.path }}' src='{{ deploy_helper.shared_path }}/{{ item.src }}' state=link"
+  with_items: "{{ project_shared_children }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Create shared symlinks
+  win_file: "path='{{ deploy_helper.new_release_path }}/{{ item.path }}' src='{{ deploy_helper.shared_path }}/{{ item.src }}' state=link"
+  with_items: "{{ project_shared_children }}"
+  when: ansible_os_family | lower == "windows"
+
+
+### Finalize
+- name: Include finalize hook
+  include_tasks: "{{ project_deploy_hook_on_finalize }}"
+  when: project_deploy_hook_on_finalize is defined
+
+- name: Run post_build_commands in the new_release_path
+  command: "{{ item }} chdir={{ deploy_helper.new_release_path }}"
+  with_items: "{{ project_post_build_commands }}"
+  environment: "{{ project_environment }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Run post_build_commands in the new_release_path
+  win_command: "{{ item }} chdir={{ deploy_helper.new_release_path }}"
+  with_items: "{{ project_post_build_commands }}"
+  environment: "{{ project_environment }}"
+  when: ansible_os_family | lower == "windows"
+
+- name: Ensure shared sources are present
+  file: "path='{{ project_root }}/{{ project_source_path }}' state='absent'"
+  when: ansible_os_family | lower == "debian"
+
+- name: Ensure shared sources are present
+  win_file: "path='{{ project_root }}/{{ project_source_path }}' state='absent'"
+  when: ansible_os_family | lower == "windows"
+
+- name: Finalize the deploy
+  deploy_helper: path={{ project_root }} release={{ deploy_helper.new_release }} state=finalize clean={{ project_clean|bool }} keep_releases={{ project_keep_releases|int }}
+  when: project_finalize and ansible_os_family | lower == "debian"
+
+- name: Finalize the deploy
+  win_deploy_helper: "path={{ project_root }} release={{ deploy_helper.new_release }} state=finalize clean={{ project_clean|bool }} keep_releases={{ project_keep_releases|int }}"
+  when: project_finalize and ansible_os_family | lower == "windows"
+
+- name: Run post_deploy_commands in the new_release_path
+  command: "{{ item }} chdir={{ deploy_helper.new_release_path }}"
+  with_items: "{{ project_post_deploy_commands }}"
+  environment: "{{ project_environment }}"
+  when: ansible_os_family | lower == "debian"
+
+- name: Run post_deploy_commands in the new_release_path
+  win_command: "{{ item }} chdir={{ deploy_helper.new_release_path }}"
+  with_items: "{{ project_post_deploy_commands }}"
+  environment: "{{ project_environment }}"
+  when: ansible_os_family | lower == "windows"

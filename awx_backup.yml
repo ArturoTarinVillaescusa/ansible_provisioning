@@ -1,0 +1,21 @@
+#
+# Playbook to backup the postgres DB of the AWX platform
+#
+# Variables:
+#
+#    docker_compose_dir: /var/lib/awx    # Path where docker-compose-db-back.yml is located
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=host awx_backup.yml
+#
+
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Start the containers to perform DB backup
+      docker_service:
+        project_src: "{{ docker_compose_dir | default('/var/lib/awx') }}"
+        files:
+          - docker-compose-db-back.yml
+      become: true

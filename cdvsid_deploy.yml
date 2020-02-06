@@ -1,0 +1,39 @@
+#
+# Playbook to deploy CDVSID
+#
+# Variables:
+#
+# cdvsid_version: CDVSID version to install (1.4.5)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=cdvsidhosts cdvsid_deploy.yml --extra-vars "cdvsid_version=1.4.5"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/cdvsid_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/cdvsid_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_templates:
+      - name: "CDVSID Properties"
+        src: "roles/cdvsid_deploy/templates/CDVSID.ini.j2"
+        dest: "CDVSID.ini"
+      - name: "PrecargasDaos Properties"
+        src: "roles/cdvsid_deploy/templates/PrecargasDaos.ini.j2"
+        dest: "PrecargasDaos.ini"
+    project_command_copy_remote_files: []
+    project_pre_deploy_commands: []
+    project_post_deploy_commands: []
+  pre_tasks:
+    - name: Check ansible config for CDVSID
+      assert:
+        that:
+        - "cdvsid_version is defined"
+
+    - include_tasks: roles/cdvsid_operate/tasks/main.yml operation=stop
+  roles:
+    - cdvsid_deploy
+  post_tasks:
+    - include_tasks: roles/cdvsid_operate/tasks/main.yml operation=start

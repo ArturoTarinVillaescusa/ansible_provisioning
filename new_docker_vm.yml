@@ -1,0 +1,68 @@
+#
+# Playbook create a new VM in vCenter en docker
+#
+# Variables:
+#
+# vm_network_ip: Ip address for the new VM to create
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=localhost,10.0.12.105 new_docker_vm.yml --extra-vars "vm_network_ip=10.0.12.105"
+#
+
+- hosts: local
+  gather_facts: false
+  tasks:
+    - name: Create a Ubuntu 16.04 VM from Template
+      vmware_guest:
+        hostname: "{{ vcenter_ip }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: False
+        datacenter: "{{ vcenter_datacenter | default('GolcarLab') }}"
+        folder: "{{ vcenter_folder | default('/GolcarLab/vm') }}"
+        name: "{{ vcenter_folder | default('dockervm'+range(1, 9999) | random | string) }}"
+        state: poweredon
+        template: ubuntu1604template
+        cluster : "{{ vcenter_datacenter | default('ClusterLAB') }}"
+        disk:
+        - size_gb: "{{ vm_root_disk_space | default('10') }}"
+          type: thin
+          datastore: LUN_SAS
+        hardware:
+          memory_mb: "{{ vm_memory | default('512') }}"
+          num_cpus: "{{ vm_cpus | default('2') }}"
+          scsi: paravirtual
+        networks:
+        - name: VM
+          mac: aa:bb:dd:aa:00:14
+          ip: "{{ vm_network_ip }}"
+          netmask: "{{ vm_network_netmask | default('255.255.255.0') }}"
+          gateway: "{{ vm_network_gateway | default('10.0.12.1') }}"
+          domain: "{{ vm_network_dns_domain | default('LABCEN.LOCAL') }}"
+          dns_servers:
+          - "{{ vm_network_dns_servers | default('10.0.12.2') }}"
+          customization:
+            dns_servers:
+            - "{{ vm_network_dns_servers | default('10.0.12.2') }}"
+            domain: "{{ vm_network_dns_domain | default('LABCEN.LOCAL') }}"
+        wait_for_ip_address: yes
+      delegate_to: localhost
+      register: deploy_ubuntu1604_vm_from_template
+
+    - debug: var=deploy_ubuntu1604_vm_from_template
+
+    - add_host:
+        name: "{{ vm_network_ip }}"
+        groups:
+          - docker
+          - linux
+        ansible_user: administrador
+
+- hosts: "{{ vm_network_ip }}"
+  gather_facts: true
+  become: yes
+  roles:
+    - bootstrap
+    - docker

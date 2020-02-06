@@ -1,0 +1,35 @@
+jenkins_url: https://jenkins.goldcar.es
+bitbucket_url: https://desreposrv.goldcar.es:8443
+
+repo_slug: "{{ repo_name | lower | replace(' ', '') }}_repo"
+repo_url_key: "{{ repo_name | replace(' ', '') }}_repo"
+repo_url_git: "{{ bitbucket_url }}/scm/{{ repo_project_key | lower }}/{{repo_url_key}}.git"
+repo_url_browser: "{{ bitbucket_url }}/projects/{{ repo_project_key }}/repos/{{repo_url_key}}"
+
+build_job: false
+build_deliver: false
+build_view: false
+
+build_name: "{{ repo_name | replace(' ', '') }}"
+build_branch:
+ - develop
+ - release
+ - hotfix
+
+build_builders_delphi: false
+build_builders_gradle: false
+build_builders_gradle_plugin: "gradle@1.28"
+build_builders_gradle_tasks: "test zip"
+build_builders_maven: false
+build_builders_maven_groupId: "com.example"
+build_builders_maven_artifactId: "test"
+build_builders_maven_goals: "clean"
+build_builders_batchfile: false
+build_builders_batchfile_command: "activator.bat clean packageAll"
+build_builders_sonar: false
+
+build_publishers_archiver: false
+build_publishers_archiver_artifact_path: "build/distributions/*.zip"
+build_publishers_junit: false
+build_publishers_junit_results_path: "build/test-results/test/*.xml"
+build_publishers_jacoco: false

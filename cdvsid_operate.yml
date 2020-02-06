@@ -1,0 +1,18 @@
+#
+# Playbook to deploy CDVSID
+#
+# Variables:
+#
+# operation: start|stop|restart
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=cdvsidhosts cdvsid_operate.yml --extra-vars "operation=restart"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/cdvsid_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  roles:
+    - cdvsid_operate

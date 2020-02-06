@@ -1,0 +1,64 @@
+  - name: "Start TAR"
+    debug: msg="Starting TAR"
+
+  - name: "Get Current Session Id"
+    win_shell: |
+      $server = "localhost"
+      $users = @()
+      # Query using quser, 2>$null to hide "No users exists...", then skip to the next server
+      $quser = quser /server:$server 2>$null
+      if(!($quser)){
+          Continue
+      }
+      #Remove column headers
+      $quser = $quser[1..$($quser.Count)]
+      foreach($user in $quser){
+        $usersObj = [PSCustomObject]@{SessionId=$Null}
+        $quserData = $user -split "\s+"
+        #We have to splice the array if the session is disconnected (as the SESSIONNAME column quserData[2] is empty)
+        if(($user | select-string "{{ psexec_service_user.split('@')[0] }}") -eq $null){
+            Continue
+        }
+        #We have to splice the array if the session is disconnected (as the SESSIONNAME column quserData[2] is empty)
+        if(($user | select-string "Disc") -ne $null){
+            #User is disconnected
+            $quserData = ($quserData[0..1],"null",$quserData[2..($quserData.Length -1)]) -split "\s+"
+        }
+        # SessionID
+        $users = $quserData[3]
+      }
+      return $users
+    register: current_session_id
+
+  - name: "Start TAR service"
+    win_command: "{{ tools_path }}{{ path_separator }}PSTools{{ path_separator }}PSExec64.exe -accepteula -nobanner -h -s -w {{ project_root }}\\current\\ -i {{ current_session_id.stdout | int }} cmd /c start {{ project_root }}\\current\\TARSID.exe"
+
+  - name: "Wait to ensure service is working"
+    win_wait_for:
+      port: "{{ service_port }}"
+      delay: 10
+      retries: 30
+      state: started
+
+  - name: "Copy Activate SQL file"
+    local_action:
+      module: template
+      src: "roles/tarsid_operate/templates/sql/activate_service.sql.j2"
+      dest: "/tmp/activate_tar.sql"
+
+  - name: "Activate TAR"
+    local_action:
+      module: mssql_db
+      name: 'BDSIGGER'
+      login_host: '{{ tar_db_host }}'
+      login_user: '{{ tar_db_user }}'
+      login_password: '{{ tar_db_password }}'
+      login_port: '{{ tar_db_port }}'
+      state: import
+      target: '/tmp/activate_tar.sql'
+
+  - name: "Remove Activate SQL file"
+    local_action:
+      module: file
+      state: absent
+      path: "/tmp/activate_tar.sql"

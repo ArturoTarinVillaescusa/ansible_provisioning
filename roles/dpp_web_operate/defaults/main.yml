@@ -1,0 +1,17 @@
+---
+
+###
+service_name: "WEB"
+web_service_name: "WEB"
+psexec_service_user: "svc_ansible_admin"
+
+####
+
+project_root: "{{ project_installation_dest }}"
+
+####
+
+system_db_host: "{{ ansible_hostname }}"
+system_db_port: "1433"
+system_db_user: "sa"
+system_db_password: "testing2018"

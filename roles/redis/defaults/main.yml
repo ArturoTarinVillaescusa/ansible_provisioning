@@ -1,0 +1,11 @@
+---
+nexus_url: "http://desreposrv.rentalcar.es:10081"
+
+nexus_repository: "{{ nexus_url }}/repository/buildTools/"
+nexus_artifact_name: "Redis"
+nexus_artifact_version: "x64-2.8.2400"
+nexus_artifact_file: "{{ nexus_artifact_name }}-{{ nexus_artifact_version }}.zip"
+nexus_artifact_path: "{{ nexus_repository }}{{ nexus_artifact_file }}"
+
+redis_artifact_dest: "{{ temp_path }}{{ path_separator}}{{ nexus_artifact_file }}"
+redis_expand_dir: "{{ tools_path }}{{ path_separator}}REDIS"

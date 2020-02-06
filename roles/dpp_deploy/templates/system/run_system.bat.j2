@@ -1,0 +1,21 @@
+@echo off
+mode 101,24
+color 1F
+
+REM ESTA PARTE INCLUYE LA VERSION EN EL TITULO
+REM --------------------------------------------------------------------
+setlocal enabledelayedexpansion
+set SEPARATOR=/
+set filecontent=
+for /f "delims=" %%a in (C:\PricingSystem\current\system\version.txt) do (
+  set currentline=%%a
+  set filecontent=!filecontent!!currentline!
+)
+title SYSTEM %filecontent%
+REM --------------------------------------------------------------------
+
+@echo off
+set "RUN_HOME=%~dp0"
+set RUN_HOME=%RUN_HOME:~0,-1%
+
+java -Xms1G -Xmx1G -Dconfig.file="%RUN_HOME%\system.conf" -Dlogback.configurationFile="%RUN_HOME%\logback.xml" -jar system.jar

@@ -1,0 +1,36 @@
+- name: Make sure we have an 'ansible' group
+  group:
+    name: ansible
+    state: present
+  become: true
+
+- name: Allow 'ansible' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%ansible'
+    line: '%ansible ALL=(ALL) NOPASSWD: ALL'
+    validate: visudo -cf %s
+  become: true
+
+- name: Add sudoers users to ansible group
+  user:
+    name: "{{ item }}"
+    groups: ansible
+    append: yes
+  become: true
+  with_items: "{{ sudoers }}"
+
+- name: "Copy resolv.conf file"
+  template:
+    src: "resolv.conf.j2"
+    dest: "/etc/resolv.conf"
+    backup: yes
+  become: true
+
+- name: Install the packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  become: true
+  with_items: "{{ install_packages }}"

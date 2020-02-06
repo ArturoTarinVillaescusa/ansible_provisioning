@@ -1,0 +1,39 @@
+#
+# Playbook to deploy GalaD
+#
+# Variables:
+#
+# galad_version: GalaD version to install (1.04.000-7da47b4)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=galadhosts galad_deploy.yml --extra-vars "galad_version=1.04.000-7da47b4"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/galad_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/galad_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_templates:
+      - name: "Application Properties"
+        src: "roles/galad_deploy/templates/GalaD.ini.j2"
+        dest: "GalaD.ini"
+      - name: "GalaD VERSION"
+        src: "roles/galad_deploy/templates/VERSION.j2"
+        dest: "VERSION.txt"
+    project_command_copy_remote_files: []
+    project_post_deploy_commands: []
+
+  pre_tasks:
+    - name: Check ansible config for GalaD
+      assert:
+        that:
+        - "galad_version is defined"
+
+    - include_tasks: roles/galad_operate/tasks/main.yml operation=stop
+  roles:
+    - galad_deploy
+  post_tasks:
+    - include_tasks: roles/galad_operate/tasks/main.yml operation=start

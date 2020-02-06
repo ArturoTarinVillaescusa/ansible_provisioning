@@ -1,0 +1,35 @@
+  - name: "Stop TAR"
+    debug: msg="Stopping TAR"
+
+  - name: "Copy Deactivate SQL file"
+    local_action:
+      module: template
+      src: "roles/tarsid_operate/templates/sql/deactivate_service.sql.j2"
+      dest: "/tmp/deactivate_tar.sql"
+
+  - name: "Deactivate TAR"
+    local_action:
+      module: mssql_db
+      name: 'BDSIGGER'
+      login_host: '{{ tar_db_host }}'
+      login_user: '{{ tar_db_user }}'
+      login_password: '{{ tar_db_password }}'
+      login_port: '{{ tar_db_port }}'
+      state: import
+      target: '/tmp/deactivate_tar.sql'
+    register: deactivate_tar_db
+
+  - name: "Remove Deactivate SQL file"
+    local_action:
+      module: file
+      state: absent
+      path: "/tmp/deactivate_tar.sql"
+
+  - name: "Wait to ensure no task processing"
+    pause:
+      seconds: 30
+
+  - name: "Stop TAR service"
+    win_command: "{{ tools_path }}{{ path_separator }}PSTools{{ path_separator }}pskill.exe -accepteula -nobanner TARSID chdir={{ project_root }}{{ path_separator }}current"
+    register: kill_tar_command
+    failed_when: "'Process does not exist' not in kill_tar_command.stdout and 'Process TARSID killed' not in kill_tar_command.stdout"

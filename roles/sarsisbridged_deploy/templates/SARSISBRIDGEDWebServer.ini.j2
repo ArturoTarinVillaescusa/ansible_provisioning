@@ -1,0 +1,23 @@
+;;;; FICHERO DE CONFIGURACION DE SARSISBRIDGEWEBSERVER ;;;;
+
+[CONFIGURACION]
+NOMBREDAEMON = SARSISBRIDGED_{{ ansible_hostname }}_01
+NOMBREPC = {{ ansible_hostname }}
+PASSWORDOPENSSL = '{{ sarsisd_openssl_pass | default(openssl_pass) }}'
+RUTACERTIFICADORAIZ = '{{ project_installation_dest }}\current\certificados\CA_cert.pem'
+RUTACERTIFICADO = '{{ project_installation_dest }}\current\certificados\rentalcar-sarsis.cert'
+RUTAKEY = '{{ project_installation_dest }}\current\certificados\Cert_PrivateKey.pem'
+PUERTOESCUCHAHTTP = {{ service_port  }}
+PUERTOESCUCHAHTTPS = {{ service_secure_port  }}
+NOMBRELOG=Logs\logSARSISBRIDGEDWebServer
+NOMBREEJECUTABLE = SARSISBRIDGEDWebServer.exe
+URLSARSISDWebserver = 'http://{{ ansible_hostname }}:9002'
+TIMEOUTRESPUESTASERVIDOR = 2400000
+IPSERVIDORBALANCEOFIJOASERVIDOR = '{{ ansible_hostname }}'
+PUERTOSERVIDORBALANCEOFIJOASERVIDOR = 9002
+IPSERVIDORBDCONFIGURACIONBRIDGESAR = 'localhost'
+NOMBREBDCONFIGURACIONBRIDGESAR = 'BDConfiguracionBridgeSAR'
+IPSERVIDORBDCONFIGURACIONDAEMONSERVIDORES = 'localhost'
+NOMBREBDCONFIGURACIONDAEMONSERVIDORES = 'BDSIGGER'
+TIPOBALANCEO = {{ sarsisbridge_tipobalanceo | default(4) }}
+ENVIAR_METRICAS_PETICIONES = 1

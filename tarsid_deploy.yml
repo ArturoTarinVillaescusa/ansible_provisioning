@@ -1,0 +1,39 @@
+#
+# Playbook to deploy TARSID
+#
+# Variables:
+#
+# tarsid_version: TARSID version to install (1.4.5)
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=tarsidhosts tarsid_deploy.yml --extra-vars "tarsid_version=1.4.5"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/tarsid_deploy/defaults/{{ ansible_os_family | lower }}.yml"
+    - "roles/tarsid_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  vars:
+    project_templates:
+      - name: "TARSID Properties"
+        src: "roles/tarsid_deploy/templates/TARSID.ini.j2"
+        dest: "TARSID.ini"
+      - name: "PrecargasDaos Properties"
+        src: "roles/tarsid_deploy/templates/PrecargasDaos.ini.j2"
+        dest: "PrecargasDaos.ini"
+    project_command_copy_remote_files: []
+    project_pre_deploy_commands: []
+    project_post_deploy_commands: []
+  pre_tasks:
+    - name: Check ansible config for TARSID
+      assert:
+        that:
+        - "tarsid_version is defined"
+
+    - include_tasks: roles/tarsid_operate/tasks/main.yml operation=stop
+  roles:
+    - tarsid_deploy
+  post_tasks:
+    - include_tasks: roles/tarsid_operate/tasks/main.yml operation=start

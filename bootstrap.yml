@@ -1,0 +1,13 @@
+#
+# Playbook to deploy Bootstrap
+#
+# Variables:
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=host bootstrap.yml
+#
+- hosts: all
+  gather_facts: true
+  roles:
+    - { role: bootstrap }

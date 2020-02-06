@@ -1,0 +1,12 @@
+---
+- name: "(Install WAF Module: All OSs) Install NGINX Plus WAF Module"
+  package:
+    name: nginx-plus-module-modsecurity
+    state: present
+
+- name: "(Setup WAF Module: NGINX Plus) Load NGINX Plus WAF Module"
+  lineinfile:
+    path: /etc/nginx/nginx.conf
+    insertbefore: BOF
+    line: load_module modules/ngx_http_modsecurity_module.so;
+  notify: "Reload NGINX"

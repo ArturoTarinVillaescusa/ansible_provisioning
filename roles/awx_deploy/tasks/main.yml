@@ -1,0 +1,2 @@
+- import_tasks: compose.yml
+  when: use_docker_compose | default(False) | bool

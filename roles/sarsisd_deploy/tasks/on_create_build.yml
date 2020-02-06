@@ -1,0 +1,7 @@
+---
+- name: Create SARSISD needed folders
+  win_file: "path='{{ deploy_helper.new_release_path }}/{{ item }}' state='directory'"
+  with_items:
+    - certificados
+  when: ansible_os_family | lower == "windows"
+

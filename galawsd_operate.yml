@@ -1,0 +1,18 @@
+#
+# Playbook to operate GalaWSD
+#
+# Variables:
+#
+# operation: start|stop|restart
+#
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=galawsdhosts galawsd_operate.yml --extra-vars "operation=restart"
+#
+- hosts: all
+  gather_facts: true
+  vars_files:
+    - "roles/galawsd_operate/defaults/{{ ansible_os_family | lower }}.yml"
+  roles:
+    - galawsd_operate

@@ -1,0 +1,13 @@
+#
+# Playbook to deploy REDIS
+#
+# Variables:
+#
+# Then run the playbook, like this:
+#
+# ansible-playbook -i inventory --limit=redis redis.yml
+#
+- hosts: all
+  gather_facts: true
+  roles:
+    - { role: redis }

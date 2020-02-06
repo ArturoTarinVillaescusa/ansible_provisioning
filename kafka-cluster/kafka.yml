@@ -1,0 +1,32 @@
+---
+# This Playbook would deploy the whole Kafka cluster
+
+- hosts: all
+  become: yes
+  become_method: sudo
+  roles:
+  - role: installation
+
+- hosts: broker1
+  become: yes
+  become_method: sudo
+  roles:
+  - role: installationbroker1
+
+- hosts: broker2
+  become: yes
+  become_method: sudo
+  roles:
+  - role: installationbroker2
+
+- hosts: broker3
+  become: yes
+  become_method: sudo
+  roles:
+  - role: installationbroker3
+
+- hosts: all
+  become: yes
+  become_method: sudo
+  roles:
+  - role: createserviceandreboot

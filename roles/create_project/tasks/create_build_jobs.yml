@@ -1,0 +1,91 @@
+- name: Check Jenkins Build Job Facts
+  local_action:
+    module: jenkins_job_facts
+    name: "{{ build_name }}-build-{{ item }}"
+    user: "{{ jenkins_user }}"
+    password: "{{ jenkins_pass}}"
+    url: "{{ jenkins_url }}"
+  register: jenkins_job_facts
+  when: build_job | bool
+  with_items: "{{ build_branch }}"
+  failed_when: "'does not exist' not in (jenkins_job_facts.msg | default (\"None\") | replace (\"-\", \"_\")) and jenkins_job_facts.jobs is not defined"
+
+- name: Check Jenkins Deliver Job Facts
+  local_action:
+    module: jenkins_job_facts
+    name: "{{ build_name }}-{{ item }}"
+    user: "{{ jenkins_user }}"
+    password: "{{ jenkins_pass}}"
+    url: "{{ jenkins_url }}"
+  register: jenkins_job_facts
+  when: build_job | bool and build_deliver | bool
+  with_items:
+    - deliver
+  failed_when: "'does not exist' not in (jenkins_job_facts.msg | default (\"None\") | replace (\"-\", \"_\")) and jenkins_job_facts.jobs is not defined"
+
+- name: Create Build Jobs
+  local_action:
+    module: jenkins_job
+    config: "{{ lookup('template', 'config.xml.j2') }}"
+    name: "{{ build_name }}-build-{{ item }}"
+    user: "{{ jenkins_user }}"
+    password: "{{ jenkins_pass}}"
+    url: "{{ jenkins_url }}"
+  with_items: "{{ build_branch }}"
+  register: jenkins_build_job
+  when: build_job | bool
+
+- name: Create Deliver Job
+  local_action:
+    module: jenkins_job
+    config: "{{ lookup('template', 'config_deliver.xml.j2') }}"
+    name: "{{ build_name }}-{{ item }}"
+    user: "{{ jenkins_user }}"
+    password: "{{ jenkins_pass}}"
+    url: "{{ jenkins_url }}"
+  with_items:
+    - deliver
+  register: jenkins_deliver_job
+  when: build_job | bool and build_deliver | bool
+
+- name: Check Jobs View
+  local_action:
+    module: uri
+    url: "{{ jenkins_url }}/view/{{ build_name }}/"
+    method: GET
+    force_basic_auth: yes
+    user: "{{ jenkins_user }}"
+    password: "{{ jenkins_pass}}"
+    status_code: 200,404
+  when: build_view | bool
+  register: build_view_exists
+
+- name: Create Jobs View
+  local_action:
+    module: uri
+    url: "{{ jenkins_url }}/createView?name={{ build_name }}"
+    method: POST
+    force_basic_auth: yes
+    user: "{{ jenkins_user }}"
+    password: "{{ jenkins_pass}}"
+    body: "{{ lookup('template','config_view.conf.j2', convert_data=False) | string }}"
+    headers:
+      Content-Type: "text/xml"
+    status_code: 200
+  when: build_view | bool and build_view_exists.status == 404
+  register: build_view
+
+- name: Update Jobs View
+  local_action:
+    module: uri
+    url: "{{ jenkins_url }}/view/{{ build_name }}/config.xml"
+    method: POST
+    force_basic_auth: yes
+    user: "{{ jenkins_user }}"
+    password: "{{ jenkins_pass}}"
+    body: "{{ lookup('template','config_view.conf.j2', convert_data=False) | string }}"
+    headers:
+      Content-Type: "text/xml"
+    status_code: 200
+  when: build_view | bool and build_view_exists.status == 200
+  register: build_view

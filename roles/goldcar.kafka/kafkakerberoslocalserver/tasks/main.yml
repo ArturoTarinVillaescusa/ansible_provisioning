@@ -1,0 +1,4 @@
+---
+# Kerberos server installation and configuration
+- include: forwardreverselookup.yml
+- include: kerberos.yml
