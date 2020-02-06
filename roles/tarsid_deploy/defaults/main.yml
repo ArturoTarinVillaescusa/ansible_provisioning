@@ -6,7 +6,7 @@ psexec_service_user: "svc_ansible_admin"
 
 #### ARTIFACT Info
 
-nexus_url: "http://desreposrv.goldcar.es:10081"
+nexus_url: "http://desreposrv.rentalcar.es:10081"
 
 nexus_repository: "{{ nexus_url }}/repository/SAR/"
 nexus_artifact_name: "TARSID.exe"

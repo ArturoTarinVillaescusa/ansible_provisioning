@@ -16,4 +16,4 @@ REM --------------------------------------------------------------------
 set "RUN_HOME=%~dp0"
 set RUN_HOME=%RUN_HOME:~0,-1%
 
-java -jar -Dfile.encoding=UTF-8 -Dspring.profiles.active={{ scheduler_env }} {{ project_artifact_name }}.jar "{{ scheduler_app_name | default('SchedulerApp') }}" "{{ scheduler_goldcar_daemon_id | default(2) }}" "{{ scheduler_port | default('8015') }}" "{{ scheduler_hostname | default('127.0.0.1') }}" ""
+java -jar -Dfile.encoding=UTF-8 -Dspring.profiles.active={{ scheduler_env }} {{ project_artifact_name }}.jar "{{ scheduler_app_name | default('SchedulerApp') }}" "{{ scheduler_rentalcar_daemon_id | default(2) }}" "{{ scheduler_port | default('8015') }}" "{{ scheduler_hostname | default('127.0.0.1') }}" ""

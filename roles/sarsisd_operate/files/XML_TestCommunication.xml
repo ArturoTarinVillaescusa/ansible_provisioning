@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
-<TestCommunicationRQ xmlns="http://sarsis.goldcar.es/SARSISD/Esquemas"
+<TestCommunicationRQ xmlns="http://sarsis.rentalcar.es/SARSISD/Esquemas"
                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                        xsi:schemaLocation="http://sarsis.goldcar.es/SARSISD/Esquemas  http://sarsis.goldcar.es/SARSISD/Esquemas/GOLDCAR_TestCommunication.xsd"/>
+                        xsi:schemaLocation="http://sarsis.rentalcar.es/SARSISD/Esquemas  http://sarsis.rentalcar.es/SARSISD/Esquemas/GOLDCAR_TestCommunication.xsd"/>

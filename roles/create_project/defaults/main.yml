@@ -1,5 +1,5 @@
-jenkins_url: https://jenkins.goldcar.es
-bitbucket_url: https://desreposrv.goldcar.es:8443
+jenkins_url: https://jenkins.rentalcar.es
+bitbucket_url: https://desreposrv.rentalcar.es:8443
 
 repo_slug: "{{ repo_name | lower | replace(' ', '') }}_repo"
 repo_url_key: "{{ repo_name | replace(' ', '') }}_repo"

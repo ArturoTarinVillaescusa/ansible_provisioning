@@ -1,11 +1,11 @@
-com.goldcar {
+com.rentalcar {
 	db.ip = "{{ ms_pc_db_ip | default('127.0.0.1') }}"
 	db.password = "{{ ms_pc_db_password| default('changeme') }}"
 	# Configuración de la BBDD de Competence Prices
 	db.internal {
-		url = "jdbc:jtds:sqlserver://"${com.goldcar.db.ip}"/BDCompetitionPrices{{ ms_pc_db_cluster | default('') }}"
+		url = "jdbc:jtds:sqlserver://"${com.rentalcar.db.ip}"/BDCompetitionPrices{{ ms_pc_db_cluster | default('') }}"
 		user = "asmwr"
-		password = ${com.goldcar.db.password}
+		password = ${com.rentalcar.db.password}
 	}
 
 	competition_prices {
@@ -64,11 +64,11 @@ slick {
 		default {
 			profile = "slick.jdbc.SQLServerProfile$"
 			db {
-				url = ${com.goldcar.db.internal.url}
+				url = ${com.rentalcar.db.internal.url}
 				driver = "net.sourceforge.jtds.jdbc.Driver"
 				#driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-				user = ${com.goldcar.db.internal.user}
-				password = ${com.goldcar.db.internal.password}
+				user = ${com.rentalcar.db.internal.user}
+				password = ${com.rentalcar.db.internal.password}
 				connectionTestQuery = "select 1"
 				connectionTimeout = 300000
 				validationTimeout = 300000
@@ -105,7 +105,7 @@ akka {
 
 competition_prices {
 	# Establece si está activado el proceso automático de carga de precios de la competencia por csv
-	active=${com.goldcar.competition_prices.active}
+	active=${com.rentalcar.competition_prices.active}
 	# Establece cuando tiene que empezar el proceso a ejecutarse desde que se arranca la app
 	# Para más info sobre los posibles valores: https://github.com/typesafehub/config/blob/master/HOCON.md#duration-format
 	scheduleStart=5 seconds
@@ -113,31 +113,31 @@ competition_prices {
 	# Para más info sobre los posibles valores: https://github.com/typesafehub/config/blob/master/HOCON.md#duration-format
 	scheduleEvery=1 minute
 	# Si se deben o no zipper los directorios de archivos CSV de fechas pasadas
-	archive = ${?com.goldcar.competition_prices.archive}
+	archive = ${?com.rentalcar.competition_prices.archive}
 	# Configuración proceso de limpieza de preciso
 	clean {
 		# Si se deben eliminar los precios de temporadas pasadas (dropoff_date < today - offsetInDays)
-		active = ${?com.goldcar.competition_prices.clean.active}
+		active = ${?com.rentalcar.competition_prices.clean.active}
 		# Número de días de margen para borrar los precios
-		offsetInDays = ${?com.goldcar.competition_prices.clean.offsetInDays}
+		offsetInDays = ${?com.rentalcar.competition_prices.clean.offsetInDays}
 	}
 	# Establece si sólo se recuperarán los precios de 7 días de los archivos CSV
-	only7days = ${com.goldcar.competition_prices.only7days}
+	only7days = ${com.rentalcar.competition_prices.only7days}
 	# Directorio (relativo o absoluto) de donde se cargan los ficheros csv
-	path=${com.goldcar.competition_prices.path}
+	path=${com.rentalcar.competition_prices.path}
 	# Extensiones de los ficheros que se contenplan en el proces
 	extensions = [".csv"]
 	# Datos FTP para descargar los ficheros Excel
 	# Si se comenta esta sección, no se bajarán automáticamente los ficheros del FTP
 	ftp {
-		active = ${?com.goldcar.competition_prices.ftp.active}
-		hostname = ${?com.goldcar.competition_prices.ftp.hostname}
-		port = ${?com.goldcar.competition_prices.ftp.port}
-		username = ${?com.goldcar.competition_prices.ftp.username}
-		password = ${?com.goldcar.competition_prices.ftp.password}
-		local_dir = ${?com.goldcar.competition_prices.path}
-		remote_dir = ${?com.goldcar.competition_prices.ftp.remote_dir}
-		processed_dir = ${?com.goldcar.competition_prices.ftp.processed_dir}
-		batch = ${?com.goldcar.competition_prices.ftp.batch}
+		active = ${?com.rentalcar.competition_prices.ftp.active}
+		hostname = ${?com.rentalcar.competition_prices.ftp.hostname}
+		port = ${?com.rentalcar.competition_prices.ftp.port}
+		username = ${?com.rentalcar.competition_prices.ftp.username}
+		password = ${?com.rentalcar.competition_prices.ftp.password}
+		local_dir = ${?com.rentalcar.competition_prices.path}
+		remote_dir = ${?com.rentalcar.competition_prices.ftp.remote_dir}
+		processed_dir = ${?com.rentalcar.competition_prices.ftp.processed_dir}
+		batch = ${?com.rentalcar.competition_prices.ftp.batch}
 	}
 }

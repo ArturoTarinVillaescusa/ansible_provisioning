@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2018, Alejandro Cavero <acavero.asmws@goldcar.com>
+# (c) 2018, Alejandro Cavero <acavero.asmws@rentalcar.com>
 #
 # This module is based of the module deploy_helper part of the core of Ansible
 

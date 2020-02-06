@@ -2,7 +2,7 @@
 
 #### ARTIFACT Info
 
-nexus_url: "http://desreposrv.goldcar.es:10081"
+nexus_url: "http://desreposrv.rentalcar.es:10081"
 
 nexus_repository: "{{ nexus_url }}/repository/Daemons/"
 nexus_artifact_name: "GalaWSD.exe"

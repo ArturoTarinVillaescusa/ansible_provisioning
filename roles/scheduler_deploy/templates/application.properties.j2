@@ -1,19 +1,19 @@
 #Propiedades obligatorias micro servicio
-goldcar.tasks.endPoints = ,/Listeners,/Listeners/Instance,/Listeners/TaskEnded
-goldcar.tasks.nameMethods = UrlBase,Listeners,Instance,TaskEnded
-goldcar.uris.endPoints =  /Listeners
-goldcar.uris.nameMethods = Listeners
-goldcar.errors.codes = 571
-goldcar.errors.descriptions = La tarea ejecutada no ha sido lanzada por el scheduler,
-goldcar.daemon = {{ scheduler_goldcar_daemon_id | default(2) }}
+rentalcar.tasks.endPoints = ,/Listeners,/Listeners/Instance,/Listeners/TaskEnded
+rentalcar.tasks.nameMethods = UrlBase,Listeners,Instance,TaskEnded
+rentalcar.uris.endPoints =  /Listeners
+rentalcar.uris.nameMethods = Listeners
+rentalcar.errors.codes = 571
+rentalcar.errors.descriptions = La tarea ejecutada no ha sido lanzada por el scheduler,
+rentalcar.daemon = {{ scheduler_rentalcar_daemon_id | default(2) }}
 
 #Propiedades propias del scheduler
-goldcar.scheduler.waitingTask.timeOut = 600
+rentalcar.scheduler.waitingTask.timeOut = 600
 hibernate.temp.use_jdbc_metadata_defaults=false
 
 #logging
 logging.file=Logs/scheduler.log
-logging.level.com.goldcar = DEBUG
+logging.level.com.rentalcar = DEBUG
 logging.level.spring.boot = DEBUG
 logging.level.org = ERROR
 
